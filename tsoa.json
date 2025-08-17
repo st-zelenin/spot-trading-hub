@@ -1,0 +1,21 @@
+{
+  "entryFile": "src/index.ts",
+  "noImplicitAdditionalProperties": "throw-on-extras",
+  "controllerPathGlobs": ["src/**/*Controller.ts"],
+  "spec": {
+    "outputDirectory": ".",
+    "specVersion": 3,
+    "basePath": "/api",
+    "securityDefinitions": {},
+    "tags": [
+      {
+        "name": "Orders",
+        "description": "Order management endpoints"
+      }
+    ]
+  },
+  "routes": {
+    "routesDir": "src/routes/generated",
+    "middleware": "express"
+  }
+}

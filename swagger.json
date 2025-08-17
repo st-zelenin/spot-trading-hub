@@ -1,0 +1,291 @@
+{
+	"openapi": "3.0.0",
+	"components": {
+		"examples": {},
+		"headers": {},
+		"parameters": {},
+		"requestBodies": {},
+		"responses": {},
+		"schemas": {
+			"ApiResponse_void_": {
+				"description": "Base response interface for all API responses",
+				"properties": {
+					"success": {
+						"type": "boolean",
+						"description": "Indicates if the operation was successful"
+					},
+					"error": {
+						"type": "string",
+						"description": "Optional error message in case of failure"
+					},
+					"data": {
+						"description": "Optional data payload in case of success"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ExchangeType": {
+				"description": "Enum representing supported exchanges",
+				"enum": [
+					"BINANCE"
+				],
+				"type": "string"
+			},
+			"CancelOrderRequest": {
+				"description": "Request body for cancelling an order",
+				"properties": {
+					"exchange": {
+						"$ref": "#/components/schemas/ExchangeType",
+						"description": "The exchange to cancel the order on",
+						"example": "BINANCE"
+					},
+					"orderId": {
+						"type": "string",
+						"description": "The ID of the order to cancel",
+						"example": "12345"
+					},
+					"symbol": {
+						"type": "string",
+						"description": "The trading pair symbol",
+						"example": "BTCUSDT"
+					}
+				},
+				"required": [
+					"exchange",
+					"orderId",
+					"symbol"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"CancelAllOrdersRequest": {
+				"description": "Request body for cancelling all orders for a symbol",
+				"properties": {
+					"exchange": {
+						"$ref": "#/components/schemas/ExchangeType",
+						"description": "The exchange to cancel the orders on",
+						"example": "BINANCE"
+					},
+					"symbol": {
+						"type": "string",
+						"description": "The trading pair symbol",
+						"example": "BTCUSDT"
+					}
+				},
+				"required": [
+					"exchange",
+					"symbol"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ApiResponse_string_": {
+				"description": "Base response interface for all API responses",
+				"properties": {
+					"success": {
+						"type": "boolean",
+						"description": "Indicates if the operation was successful"
+					},
+					"error": {
+						"type": "string",
+						"description": "Optional error message in case of failure"
+					},
+					"data": {
+						"type": "string",
+						"description": "Optional data payload in case of success"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"TrailingTakeProfitLimitSellOrderRequest": {
+				"description": "Request body for placing a trailing take profit limit sell order",
+				"properties": {
+					"exchange": {
+						"$ref": "#/components/schemas/ExchangeType",
+						"description": "The exchange to place the order on",
+						"example": "BINANCE"
+					},
+					"symbol": {
+						"type": "string",
+						"description": "The trading pair symbol",
+						"example": "BTCUSDT"
+					},
+					"quantity": {
+						"type": "number",
+						"format": "double",
+						"description": "The quantity to sell",
+						"example": 0.01
+					},
+					"limitPrice": {
+						"type": "number",
+						"format": "double",
+						"description": "The limit price for the order",
+						"example": 50000
+					}
+				},
+				"required": [
+					"exchange",
+					"symbol",
+					"quantity",
+					"limitPrice"
+				],
+				"type": "object",
+				"additionalProperties": false
+			}
+		},
+		"securitySchemes": {}
+	},
+	"info": {
+		"title": "spot-trading-hub",
+		"version": "1.0.0",
+		"description": "A Node.js application for managing crypto exchange spot orders",
+		"license": {
+			"name": "ISC"
+		},
+		"contact": {}
+	},
+	"paths": {
+		"/orders/cancel": {
+			"post": {
+				"operationId": "CancelOrder",
+				"responses": {
+					"200": {
+						"description": "Order cancelled successfully",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_void_"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request, missing or invalid parameters"
+					},
+					"500": {
+						"description": "Server error or exchange error"
+					}
+				},
+				"description": "Cancels an order on the specified exchange",
+				"tags": [
+					"Orders"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"description": "The order cancellation request",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CancelOrderRequest",
+								"description": "The order cancellation request"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/orders/cancel-all": {
+			"post": {
+				"operationId": "CancelAllOrders",
+				"responses": {
+					"200": {
+						"description": "All orders cancelled successfully",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_void_"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request, missing or invalid parameters"
+					},
+					"500": {
+						"description": "Server error or exchange error"
+					}
+				},
+				"description": "Cancels all orders for a symbol on the specified exchange",
+				"tags": [
+					"Orders"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"description": "The order cancellation request",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CancelAllOrdersRequest",
+								"description": "The order cancellation request"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/orders/trailing-sell": {
+			"post": {
+				"operationId": "PlaceTrailingTakeProfitLimitSellOrder",
+				"responses": {
+					"200": {
+						"description": "Order placed successfully",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request, missing or invalid parameters"
+					},
+					"500": {
+						"description": "Server error or exchange error"
+					}
+				},
+				"description": "Places a trailing take profit limit sell order on the specified exchange",
+				"tags": [
+					"Orders"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"description": "The order request",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/TrailingTakeProfitLimitSellOrderRequest",
+								"description": "The order request"
+							}
+						}
+					}
+				}
+			}
+		}
+	},
+	"servers": [
+		{
+			"url": "/api"
+		}
+	],
+	"tags": [
+		{
+			"name": "Orders",
+			"description": "Order management endpoints"
+		}
+	]
+}

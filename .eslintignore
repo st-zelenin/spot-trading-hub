@@ -1,0 +1,16 @@
+# Build output
+dist/
+
+# Node modules
+node_modules/
+
+# Generated files
+src/routes/generated/
+swagger.json
+swagger.yaml
+
+# Package files
+package-lock.json
+
+# Test files
+test-*.js

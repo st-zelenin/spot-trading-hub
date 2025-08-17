@@ -1,0 +1,6 @@
+{
+  "watch": ["src"],
+  "ext": "ts",
+  "ignore": ["src/routes/generated", "*.test.ts"],
+  "exec": "npm run tsoa:generate && ts-node src/index.ts"
+}
