@@ -2,6 +2,7 @@ import { ExchangeType } from '../models/exchange';
 import { ExchangeService } from './interfaces/exchange-service.interface';
 import { BinanceService } from './exchanges/binance.service';
 import { logger } from '../utils/logger';
+import { ValidationError } from '../models/errors';
 
 /**
  * Factory class for creating exchange service instances
@@ -15,6 +16,7 @@ export class ExchangeFactory {
    * Uses singleton pattern to reuse existing instances
    * @param exchangeType The type of exchange
    * @returns An instance of ExchangeService
+   * @throws ValidationError if the exchange type is not supported
    */
   public static getExchangeService(exchangeType: ExchangeType): ExchangeService {
     if (!this.instances.has(exchangeType)) {
@@ -25,7 +27,7 @@ export class ExchangeFactory {
           this.instances.set(exchangeType, new BinanceService());
           break;
         default:
-          throw new Error(`Unsupported exchange type: ${String(exchangeType)}`);
+          throw new ValidationError(`Unsupported exchange type: ${String(exchangeType)}`);
       }
     }
 

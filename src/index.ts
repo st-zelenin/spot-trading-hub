@@ -9,6 +9,8 @@ import apiRoutes from './routes';
 import { env } from './config/env';
 import { logger } from './utils/logger';
 import { setupSwagger } from './config/swagger';
+import { BaseApiError } from './models/errors';
+import { ApiResponse } from './models/dto/response-dto';
 
 // Create Express application
 const app = express();
@@ -43,19 +45,35 @@ app.use((err: unknown, _req: express.Request, res: express.Response, _next: expr
   if (err && typeof err === 'object' && 'status' in err && 'fields' in err) {
     const validationError = err as { status: number; fields: Record<string, unknown> };
     logger.warn('Validation error', { error: validationError });
-    return res.status(validationError.status).json({
+    const body: ApiResponse<null> = {
       success: false,
-      message: 'Validation failed',
-      errors: validationError.fields,
-    });
+      error: JSON.stringify(validationError.fields),
+      data: null,
+    };
+
+    return res.status(validationError.status).json(body);
+  }
+
+  // Handle custom API errors
+  if (err instanceof BaseApiError) {
+    logger.warn(`${err.name}: ${err.message}`, { error: err });
+    const body: ApiResponse<null> = {
+      success: false,
+      error: err.message,
+      data: null,
+    };
+    return res.status(err.statusCode).json(body);
   }
 
   // Handle other errors
   logger.error('Unhandled error', { error: err });
-  return res.status(500).json({
+  const message = err instanceof Error ? `Internal server error: ${err.message}` : 'Internal server error';
+  const body: ApiResponse<null> = {
     success: false,
-    message: 'Internal server error',
-  });
+    error: message,
+    data: null,
+  };
+  return res.status(500).json(body);
 });
 
 // Start the server

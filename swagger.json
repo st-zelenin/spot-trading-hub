@@ -7,7 +7,7 @@
 		"requestBodies": {},
 		"responses": {},
 		"schemas": {
-			"ApiResponse_void_": {
+			"ApiResponse_null_": {
 				"description": "Base response interface for all API responses",
 				"properties": {
 					"success": {
@@ -19,6 +19,11 @@
 						"description": "Optional error message in case of failure"
 					},
 					"data": {
+						"type": "number",
+						"enum": [
+							null
+						],
+						"nullable": true,
 						"description": "Optional data payload in case of success"
 					}
 				},
@@ -83,7 +88,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"ApiResponse_string_": {
+			"ApiResponse_string-or-null_": {
 				"description": "Base response interface for all API responses",
 				"properties": {
 					"success": {
@@ -96,6 +101,7 @@
 					},
 					"data": {
 						"type": "string",
+						"nullable": true,
 						"description": "Optional data payload in case of success"
 					}
 				},
@@ -162,7 +168,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_void_"
+									"$ref": "#/components/schemas/ApiResponse_null_"
 								}
 							}
 						}
@@ -203,7 +209,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_void_"
+									"$ref": "#/components/schemas/ApiResponse_null_"
 								}
 							}
 						}
@@ -244,7 +250,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string_"
+									"$ref": "#/components/schemas/ApiResponse_string-or-null_"
 								}
 							}
 						}
