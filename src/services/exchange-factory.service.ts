@@ -1,8 +1,9 @@
 import { ExchangeType } from '../models/exchange';
 import { ExchangeService } from './interfaces/exchange-service.interface';
-import { BinanceService } from './exchanges/binance.service';
+import { BybitService } from './bybit/bybit.service';
 import { logger } from '../utils/logger';
 import { ValidationError } from '../models/errors';
+import { BinanceService } from './binance/binance.service';
 
 /**
  * Factory class for creating exchange service instances
@@ -25,6 +26,9 @@ export class ExchangeFactory {
       switch (exchangeType) {
         case ExchangeType.BINANCE:
           this.instances.set(exchangeType, new BinanceService());
+          break;
+        case ExchangeType.BYBIT:
+          this.instances.set(exchangeType, new BybitService());
           break;
         default:
           throw new ValidationError(`Unsupported exchange type: ${String(exchangeType)}`);

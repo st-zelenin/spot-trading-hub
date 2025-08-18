@@ -7,6 +7,110 @@
 		"requestBodies": {},
 		"responses": {},
 		"schemas": {
+			"TradeHistory": {
+				"description": "Unified trade history model for all exchanges",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The ID of the trade"
+					},
+					"symbol": {
+						"type": "string",
+						"description": "The trading pair symbol"
+					},
+					"price": {
+						"type": "number",
+						"format": "double",
+						"description": "The price at which the trade was executed"
+					},
+					"quantity": {
+						"type": "number",
+						"format": "double",
+						"description": "The quantity of the trade"
+					},
+					"quoteQuantity": {
+						"type": "number",
+						"format": "double",
+						"description": "The total value of the trade (price * quantity)"
+					},
+					"time": {
+						"type": "string",
+						"format": "date-time",
+						"description": "The timestamp of the trade"
+					},
+					"isBuyer": {
+						"type": "boolean",
+						"description": "Whether the trade was a buy or sell"
+					},
+					"isMaker": {
+						"type": "boolean",
+						"description": "Whether the trade was a maker or taker"
+					},
+					"fee": {
+						"type": "number",
+						"format": "double",
+						"description": "The fee amount"
+					},
+					"feeAsset": {
+						"type": "string",
+						"description": "The fee asset"
+					},
+					"orderId": {
+						"type": "string",
+						"description": "The order ID associated with the trade"
+					},
+					"clientOrderId": {
+						"type": "string",
+						"description": "The client order ID associated with the trade"
+					}
+				},
+				"required": [
+					"id",
+					"symbol",
+					"price",
+					"quantity",
+					"quoteQuantity",
+					"time",
+					"isBuyer",
+					"isMaker",
+					"orderId"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ApiResponse_TradeHistory-Array_": {
+				"description": "Base response interface for all API responses",
+				"properties": {
+					"success": {
+						"type": "boolean",
+						"description": "Indicates if the operation was successful"
+					},
+					"error": {
+						"type": "string",
+						"description": "Optional error message in case of failure"
+					},
+					"data": {
+						"items": {
+							"$ref": "#/components/schemas/TradeHistory"
+						},
+						"type": "array",
+						"description": "Optional data payload in case of success"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ExchangeType": {
+				"description": "Enum representing supported exchanges",
+				"enum": [
+					"BINANCE",
+					"BYBIT"
+				],
+				"type": "string"
+			},
 			"ApiResponse_null_": {
 				"description": "Base response interface for all API responses",
 				"properties": {
@@ -32,13 +136,6 @@
 				],
 				"type": "object",
 				"additionalProperties": false
-			},
-			"ExchangeType": {
-				"description": "Enum representing supported exchanges",
-				"enum": [
-					"BINANCE"
-				],
-				"type": "string"
 			},
 			"CancelOrderRequest": {
 				"description": "Request body for cancelling an order",
@@ -159,6 +256,48 @@
 		"contact": {}
 	},
 	"paths": {
+		"/trade-history/history": {
+			"get": {
+				"operationId": "GetTradeHistory",
+				"responses": {
+					"200": {
+						"description": "Trade history response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_TradeHistory-Array_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Get trade history for a specific exchange",
+				"tags": [
+					"Trade History"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The exchange to get trade history from",
+						"in": "query",
+						"name": "exchange",
+						"required": true,
+						"schema": {
+							"$ref": "#/components/schemas/ExchangeType"
+						}
+					},
+					{
+						"description": "The symbol to filter trades",
+						"in": "query",
+						"name": "symbol",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
 		"/orders/cancel": {
 			"post": {
 				"operationId": "CancelOrder",
@@ -292,6 +431,10 @@
 		{
 			"name": "Orders",
 			"description": "Order management endpoints"
+		},
+		{
+			"name": "Trade History",
+			"description": "Trade history endpoints"
 		}
 	]
 }

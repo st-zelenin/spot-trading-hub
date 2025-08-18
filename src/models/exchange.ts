@@ -3,10 +3,11 @@
  */
 export enum ExchangeType {
   BINANCE = 'BINANCE',
+  BYBIT = 'BYBIT',
   // More exchanges will be added later
 }
 
-export interface BinanceSymbolInfo {
+export interface SymbolInfo {
   baseAsset: string;
   quoteAsset: string;
   stepSize: string;

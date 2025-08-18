@@ -4,6 +4,8 @@
 import type { TsoaRoute } from '@tsoa/runtime';
 import {  fetchMiddlewares, ExpressTemplateService } from '@tsoa/runtime';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { TradeHistoryController } from './../../controllers/trade-history.controller';
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { OrderController } from './../../controllers/order.controller';
 import type { Request as ExRequest, Response as ExResponse, RequestHandler, Router } from 'express';
 
@@ -12,6 +14,40 @@ import type { Request as ExRequest, Response as ExResponse, RequestHandler, Rout
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 
 const models: TsoaRoute.Models = {
+    "TradeHistory": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "symbol": {"dataType":"string","required":true},
+            "price": {"dataType":"double","required":true},
+            "quantity": {"dataType":"double","required":true},
+            "quoteQuantity": {"dataType":"double","required":true},
+            "time": {"dataType":"datetime","required":true},
+            "isBuyer": {"dataType":"boolean","required":true},
+            "isMaker": {"dataType":"boolean","required":true},
+            "fee": {"dataType":"double"},
+            "feeAsset": {"dataType":"string"},
+            "orderId": {"dataType":"string","required":true},
+            "clientOrderId": {"dataType":"string"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ApiResponse_TradeHistory-Array_": {
+        "dataType": "refObject",
+        "properties": {
+            "success": {"dataType":"boolean","required":true},
+            "error": {"dataType":"string"},
+            "data": {"dataType":"array","array":{"dataType":"refObject","ref":"TradeHistory"}},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ExchangeType": {
+        "dataType": "refEnum",
+        "enums": ["BINANCE","BYBIT"],
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "ApiResponse_null_": {
         "dataType": "refObject",
         "properties": {
@@ -20,11 +56,6 @@ const models: TsoaRoute.Models = {
             "data": {"dataType":"enum","enums":[null]},
         },
         "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "ExchangeType": {
-        "dataType": "refEnum",
-        "enums": ["BINANCE"],
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "CancelOrderRequest": {
@@ -84,6 +115,37 @@ export function RegisterRoutes(app: Router) {
 
 
     
+        const argsTradeHistoryController_getTradeHistory: Record<string, TsoaRoute.ParameterSchema> = {
+                exchange: {"in":"query","name":"exchange","required":true,"ref":"ExchangeType"},
+                symbol: {"in":"query","name":"symbol","required":true,"dataType":"string"},
+        };
+        app.get('/trade-history/history',
+            ...(fetchMiddlewares<RequestHandler>(TradeHistoryController)),
+            ...(fetchMiddlewares<RequestHandler>(TradeHistoryController.prototype.getTradeHistory)),
+
+            async function TradeHistoryController_getTradeHistory(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsTradeHistoryController_getTradeHistory, request, response });
+
+                const controller = new TradeHistoryController();
+
+              await templateService.apiHandler({
+                methodName: 'getTradeHistory',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsOrderController_cancelOrder: Record<string, TsoaRoute.ParameterSchema> = {
                 requestBody: {"in":"body","name":"requestBody","required":true,"ref":"CancelOrderRequest"},
         };

@@ -60,5 +60,5 @@ components:
   schemas:
     ExchangeType:
       type: string
-      enum: [BINANCE]
+      enum: [BINANCE, BYBIT]
       description: Supported exchange types

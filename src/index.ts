@@ -11,6 +11,8 @@ import { logger } from './utils/logger';
 import { setupSwagger } from './config/swagger';
 import { BaseApiError } from './models/errors';
 import { ApiResponse } from './models/dto/response-dto';
+import { bybitDbService } from './services/bybit/bybit-db.service';
+import { binanceDbService } from './services/binance/binance-db.service';
 
 // Create Express application
 const app = express();
@@ -74,6 +76,20 @@ app.use((err: unknown, _req: express.Request, res: express.Response, _next: expr
     data: null,
   };
   return res.status(500).json(body);
+});
+
+// Initialize Binance DB service
+binanceDbService.initialize().catch((error: unknown) => {
+  logger.error('Failed to initialize Binance DB service', {
+    error: error instanceof Error ? error.message : 'Unknown error',
+  });
+});
+
+// Initialize Bybit DB service
+bybitDbService.initialize().catch((error: unknown) => {
+  logger.error('Failed to initialize Bybit DB service', {
+    error: error instanceof Error ? error.message : 'Unknown error',
+  });
 });
 
 // Start the server

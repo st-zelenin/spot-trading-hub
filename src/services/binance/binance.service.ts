@@ -2,7 +2,7 @@ import { Spot, SpotRestAPI } from '@binance/spot';
 import { ExchangeService } from '../interfaces/exchange-service.interface';
 import { env } from '../../config/env';
 import { logger } from '../../utils/logger';
-import { BinanceSymbolInfo } from '../../models/exchange';
+import { SymbolInfo } from '../../models/exchange';
 import Decimal from 'decimal.js';
 import { BaseApiError, ExchangeError, ValidationError } from '../../models/errors';
 
@@ -12,7 +12,7 @@ import { BaseApiError, ExchangeError, ValidationError } from '../../models/error
  */
 export class BinanceService implements ExchangeService {
   private readonly client: Spot;
-  private readonly symbolInfoCache: Map<string, BinanceSymbolInfo> = new Map();
+  private readonly symbolInfoCache: Map<string, SymbolInfo> = new Map();
 
   constructor() {
     this.client = new Spot({
@@ -96,7 +96,7 @@ export class BinanceService implements ExchangeService {
     }
   }
 
-  private async getExchangeInfo(symbol: string): Promise<BinanceSymbolInfo> {
+  private async getExchangeInfo(symbol: string): Promise<SymbolInfo> {
     try {
       if (this.symbolInfoCache.has(symbol)) {
         return this.symbolInfoCache.get(symbol)!;
@@ -152,7 +152,7 @@ export class BinanceService implements ExchangeService {
           `stepSize=${stepSize}, tickSize=${tickSize}, minNotional=${notionalFilter?.minNotional}`
       );
 
-      const result: BinanceSymbolInfo = {
+      const result: SymbolInfo = {
         baseAsset,
         quoteAsset,
         stepSize,

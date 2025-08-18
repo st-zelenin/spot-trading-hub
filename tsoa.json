@@ -11,6 +11,10 @@
       {
         "name": "Orders",
         "description": "Order management endpoints"
+      },
+      {
+        "name": "Trade History",
+        "description": "Trade history endpoints"
       }
     ]
   },

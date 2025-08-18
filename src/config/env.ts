@@ -12,6 +12,15 @@ export const env = cleanEnv(process.env, {
   BINANCE_API_KEY: str({ desc: 'Binance API key' }),
   BINANCE_API_SECRET: str({ desc: 'Binance API secret' }),
 
+  // Bybit API credentials
+  BYBIT_API_KEY: str({ desc: 'Bybit API key' }),
+  BYBIT_API_SECRET: str({ desc: 'Bybit API secret' }),
+
+  // Azure Cosmos DB configuration
+  COSMOS_DB_CONNECTION_STRING: str({ desc: 'Azure Cosmos DB endpoint URL' }),
+  COSMOS_DB_KEY: str({ desc: 'Azure Cosmos DB access key' }),
+  COSMOS_DB_COMMON_CONTAINER_NAME: str({ desc: 'Azure Cosmos DB common container name' }),
+
   // Logging
   LOG_LEVEL: str({
     choices: ['error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly'],
