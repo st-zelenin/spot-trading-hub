@@ -4,6 +4,8 @@ import { logger } from '../utils/logger';
 import { ValidationError } from '../models/errors';
 import { BybitTradeHistoryService } from './bybit/bybit-trade-history.service';
 import { BinanceTradeHistoryService } from './binance/binance-trade-history.service';
+import { bybitDbService } from './bybit/bybit-db.service';
+import { binanceDbService } from './binance/binance-db.service';
 
 /**
  * Factory class for creating trade history service instances
@@ -25,10 +27,10 @@ export class TradeHistoryFactory {
 
       switch (exchangeType) {
         case ExchangeType.BINANCE:
-          this.instances.set(exchangeType, new BinanceTradeHistoryService());
+          this.instances.set(exchangeType, new BinanceTradeHistoryService(binanceDbService));
           break;
         case ExchangeType.BYBIT:
-          this.instances.set(exchangeType, new BybitTradeHistoryService());
+          this.instances.set(exchangeType, new BybitTradeHistoryService(bybitDbService));
           break;
         default:
           throw new ValidationError(`Unsupported exchange type: ${String(exchangeType)}`);

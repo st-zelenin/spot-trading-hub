@@ -24,6 +24,39 @@ export class BinanceService implements ExchangeService {
     logger.info('Binance service initialized');
   }
 
+  public async getSymbolRecentFilledOrders(symbol: string): Promise<SpotRestAPI.AllOrdersResponse> {
+    try {
+      logger.info(`Fetching recent filled ${symbol} orders from Binance`);
+
+      const response = await this.client.restAPI.allOrders({ symbol });
+
+      const orders = await response.data();
+      logger.info(`Fetched ${orders.length} recent filled orders from Binance`);
+
+      return orders.filter((order) => order.status === 'FILLED');
+    } catch (error) {
+      throw this.getExchangeError('Failed to fetch recent filled orders', error);
+    }
+  }
+
+  public async getOrder(orderId: string, symbol: string): Promise<SpotRestAPI.GetOrderResponse> {
+    try {
+      logger.info(`Fetching order ${orderId} for symbol ${symbol} from Binance`);
+
+      const response = await this.client.restAPI.getOrder({
+        symbol,
+        orderId: parseInt(orderId, 10),
+      });
+
+      const order = await response.data();
+      logger.info(`Fetched order ${orderId} for symbol ${symbol} from Binance`);
+
+      return order;
+    } catch (error) {
+      throw this.getExchangeError('Failed to fetch order', error);
+    }
+  }
+
   public async cancelOrder(orderId: string, symbol: string): Promise<void> {
     try {
       logger.info(`Cancelling order ${orderId} for symbol ${symbol} on Binance`);

@@ -1,13 +1,15 @@
 import { TradeHistoryService } from '../interfaces/trade-history-service.interface';
 import { TradeHistory } from '../../models/trade-history';
-import { env } from '../../config/env';
 import { logger } from '../../utils/logger';
-import { binanceDbService } from './binance-db.service';
+import { CosmosDbService } from '../interfaces/cosmos-db-service.interface';
+import { CONTAINER_NAMES } from '../../constants';
 
 /**
  * Binance-specific implementation of the TradeHistoryService
  */
 export class BinanceTradeHistoryService implements TradeHistoryService {
+  constructor(private readonly ordersDbService: CosmosDbService) {}
+
   /**
    * Gets trade history from Binance container in Cosmos DB
    * @param symbol Required symbol to filter trades
@@ -16,14 +18,11 @@ export class BinanceTradeHistoryService implements TradeHistoryService {
   public async getTradeHistory(symbol: string): Promise<TradeHistory[]> {
     try {
       const query = 'SELECT * FROM c WHERE c.symbol = @p0 AND c.status = "FILLED" ORDER BY c.updateTime DESC';
-      const parameters: (string | number)[] = [symbol];
 
       // Query the Binance container
-      const results = await binanceDbService.queryContainer<BinanceTradeRecord>(
-        env.COSMOS_DB_COMMON_CONTAINER_NAME,
-        query,
-        parameters
-      );
+      const results = await this.ordersDbService.queryContainer<BinanceTradeRecord>(CONTAINER_NAMES.Orders, query, [
+        symbol,
+      ]);
 
       // Map Binance-specific records to the unified TradeHistory model
       return results.map((t) => this.mapToTradeHistory(t));

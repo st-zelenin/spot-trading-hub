@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Route, Response, SuccessResponse, Tags } from 'tsoa';
+import { Body, Controller, Get, Post, Query, Route, SuccessResponse, Tags } from 'tsoa';
 import { ExchangeFactory } from '../services/exchange-factory.service';
 import { logger } from '../utils/logger';
 import {
@@ -7,13 +7,36 @@ import {
   TrailingTakeProfitLimitSellOrderRequest,
 } from '../models/dto/order-dto';
 import { ApiResponse } from '../models/dto/response-dto';
+import { ExchangeType } from '../models/exchange';
 
 /**
  * Controller for handling order-related operations
  */
-@Route('orders')
-@Tags('Orders')
+@Route('order')
+@Tags('Order')
 export class OrderController extends Controller {
+  /**
+   * Get exchange raw order
+   * @returns Exchange raw order
+   */
+  @Get('')
+  @SuccessResponse('200', 'Exchange raw order')
+  public async getExchangeRawOrder(
+    @Query() exchange: ExchangeType,
+    @Query() orderId: string,
+    @Query() symbol: string
+  ): Promise<ApiResponse<unknown>> {
+    logger.info(`Fetching order ${orderId} for exchange ${exchange} and symbol ${symbol}`);
+
+    const exchangeService = ExchangeFactory.getExchangeService(exchange);
+    const order = await exchangeService.getOrder(orderId, symbol);
+
+    return {
+      success: true,
+      data: order,
+    };
+  }
+
   /**
    * Cancels an order on the specified exchange
    * @param requestBody The order cancellation request
@@ -21,8 +44,6 @@ export class OrderController extends Controller {
    */
   @Post('cancel')
   @SuccessResponse('200', 'Order cancelled successfully')
-  @Response('400', 'Bad request, missing or invalid parameters')
-  @Response('500', 'Server error or exchange error')
   public async cancelOrder(@Body() requestBody: CancelOrderRequest): Promise<ApiResponse<null>> {
     const { exchange, orderId, symbol } = requestBody;
 
@@ -43,8 +64,6 @@ export class OrderController extends Controller {
    */
   @Post('cancel-all')
   @SuccessResponse('200', 'All orders cancelled successfully')
-  @Response('400', 'Bad request, missing or invalid parameters')
-  @Response('500', 'Server error or exchange error')
   public async cancelAllOrders(@Body() requestBody: CancelAllOrdersRequest): Promise<ApiResponse<null>> {
     const { exchange, symbol } = requestBody;
 
@@ -66,8 +85,6 @@ export class OrderController extends Controller {
    */
   @Post('trailing-sell')
   @SuccessResponse('200', 'Order placed successfully')
-  @Response('400', 'Bad request, missing or invalid parameters')
-  @Response('500', 'Server error or exchange error')
   public async placeTrailingTakeProfitLimitSellOrder(
     @Body() requestBody: TrailingTakeProfitLimitSellOrderRequest
   ): Promise<ApiResponse<string | null>> {

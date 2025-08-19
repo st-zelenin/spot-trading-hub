@@ -1,10 +1,10 @@
-import { RestClientV5, OrderParamsV5 } from 'bybit-api';
+import { RestClientV5, OrderParamsV5, AccountOrderV5 } from 'bybit-api';
 import { ExchangeService } from '../interfaces/exchange-service.interface';
 import { env } from '../../config/env';
 import { logger } from '../../utils/logger';
 import { SymbolInfo } from '../../models/exchange';
 import Decimal from 'decimal.js';
-import { BaseApiError, ExchangeError, ValidationError } from '../../models/errors';
+import { BaseApiError, ExchangeError, NotFoundError, ValidationError } from '../../models/errors';
 
 /**
  * Bybit exchange service implementation
@@ -20,6 +20,74 @@ export class BybitService implements ExchangeService {
       secret: env.BYBIT_API_SECRET,
     });
     logger.info('Bybit service initialized');
+  }
+
+  public async getSymbolRecentFilledOrders(symbol: string): Promise<AccountOrderV5[]> {
+    try {
+      logger.info(`Fetching recent filled ${symbol} orders from Bybit`);
+
+      const response = await this.client.getHistoricOrders({
+        category: 'spot',
+        symbol,
+      });
+
+      if (response.retCode !== 0) {
+        throw new Error(`Failed to fetch recent filled orders: ${response.retMsg}`);
+      }
+
+      const orders = response.result?.list || [];
+      logger.info(`Fetched ${orders.length} recent filled orders from Bybit`);
+
+      return orders.filter((order) => order.orderStatus === 'Filled');
+    } catch (error) {
+      throw this.getExchangeError('Failed to fetch recent filled orders', error);
+    }
+  }
+
+  public async getOrder(orderId: string, symbol: string): Promise<unknown> {
+    try {
+      logger.info(`Fetching order ${orderId} for symbol ${symbol} from Bybit`);
+
+      const historicOrdersResponse = await this.client.getHistoricOrders({
+        category: 'spot',
+        symbol,
+        orderId,
+      });
+
+      if (historicOrdersResponse.retCode !== 0) {
+        throw new Error(`Failed to fetch order: ${historicOrdersResponse.retMsg}`);
+      }
+
+      const historicOrders = historicOrdersResponse.result?.list || [];
+
+      if (historicOrders.length) {
+        logger.info(`Successfully fetched order ${orderId} for symbol ${symbol} (historic orders)`);
+        // TODO: test and return first
+        return historicOrders;
+      }
+
+      const activeOrdersResponse = await this.client.getActiveOrders({
+        category: 'spot',
+        symbol,
+        orderId,
+      });
+
+      if (activeOrdersResponse.retCode !== 0) {
+        throw new Error(`Failed to fetch order: ${activeOrdersResponse.retMsg}`);
+      }
+
+      const activeOrders = activeOrdersResponse.result?.list || [];
+
+      if (activeOrders.length) {
+        logger.info(`Successfully fetched order ${orderId} for symbol ${symbol} (active orders)`);
+        // TODO: test and return first
+        return activeOrders;
+      }
+
+      throw new NotFoundError(`Order ${orderId} for symbol ${symbol} not found`);
+    } catch (error) {
+      throw this.getExchangeError(`Failed to fetch order ${orderId}`, error);
+    }
   }
 
   public async cancelOrder(orderId: string, symbol: string): Promise<void> {

@@ -1,9 +1,9 @@
 import { ExchangeType } from '../exchange';
 
 /**
- * Request parameters for getting trade history
+ * Request parameters for updating recent history
  */
-export interface GetTradeHistoryRequest {
+export interface UpdateRecentHistoryRequest {
   /**
    * The exchange to get trade history from
    * @example "BINANCE"

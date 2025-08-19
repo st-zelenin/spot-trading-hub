@@ -1,11 +1,12 @@
 import { CosmosClient, Container, Database, SqlQuerySpec, JSONValue } from '@azure/cosmos';
 import { env } from '../config/env';
 import { logger } from '../utils/logger';
+import { CosmosDbService } from './interfaces/cosmos-db-service.interface';
 
 /**
  * Base service for Azure Cosmos DB operations
  */
-export class BaseCosmosDbService {
+export class BaseCosmosDbService implements CosmosDbService {
   private client: CosmosClient;
   private database: Database | undefined;
   private containers: Map<string, Container> = new Map();
@@ -22,7 +23,7 @@ export class BaseCosmosDbService {
   /**
    * Initializes the database and containers
    */
-  public async initialize(): Promise<void> {
+  public async initialize(defaultContainer: string): Promise<void> {
     try {
       // Get or create database
       const { database } = await this.client.databases.createIfNotExists({
@@ -31,40 +32,12 @@ export class BaseCosmosDbService {
       this.database = database;
 
       // Get or create containers
-      await this.getContainer(env.COSMOS_DB_COMMON_CONTAINER_NAME);
+      await this.getContainer(defaultContainer);
 
       logger.info('CosmosDB database and containers initialized');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error(`Failed to initialize CosmosDB: ${errorMessage}`);
-      throw error;
-    }
-  }
-
-  /**
-   * Gets a container by ID, creating it if it doesn't exist
-   * @param containerId The ID of the container
-   * @returns The container
-   */
-  public async getContainer(containerId: string): Promise<Container> {
-    if (!this.database) {
-      await this.initialize();
-    }
-
-    if (this.containers.has(containerId)) {
-      return this.containers.get(containerId)!;
-    }
-
-    try {
-      const { container } = await this.database!.containers.createIfNotExists({
-        id: containerId,
-      });
-
-      this.containers.set(containerId, container);
-      return container;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error(`Failed to get container ${containerId}: ${errorMessage}`);
       throw error;
     }
   }
@@ -96,6 +69,30 @@ export class BaseCosmosDbService {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error(`Failed to query container ${containerId}: ${errorMessage}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Gets a container by ID, creating it if it doesn't exist
+   * @param containerId The ID of the container
+   * @returns The container
+   */
+  private async getContainer(containerId: string): Promise<Container> {
+    if (this.containers.has(containerId)) {
+      return this.containers.get(containerId)!;
+    }
+
+    try {
+      const { container } = await this.database!.containers.createIfNotExists({
+        id: containerId,
+      });
+
+      this.containers.set(containerId, container);
+      return container;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      logger.error(`Failed to get container ${containerId}: ${errorMessage}`);
       throw error;
     }
   }

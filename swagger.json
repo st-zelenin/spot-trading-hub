@@ -7,78 +7,74 @@
 		"requestBodies": {},
 		"responses": {},
 		"schemas": {
-			"TradeHistory": {
-				"description": "Unified trade history model for all exchanges",
+			"CryptoPair": {
 				"properties": {
-					"id": {
-						"type": "string",
-						"description": "The ID of the trade"
-					},
 					"symbol": {
-						"type": "string",
-						"description": "The trading pair symbol"
+						"type": "string"
 					},
-					"price": {
-						"type": "number",
-						"format": "double",
-						"description": "The price at which the trade was executed"
-					},
-					"quantity": {
-						"type": "number",
-						"format": "double",
-						"description": "The quantity of the trade"
-					},
-					"quoteQuantity": {
-						"type": "number",
-						"format": "double",
-						"description": "The total value of the trade (price * quantity)"
-					},
-					"time": {
-						"type": "string",
-						"format": "date-time",
-						"description": "The timestamp of the trade"
-					},
-					"isBuyer": {
-						"type": "boolean",
-						"description": "Whether the trade was a buy or sell"
-					},
-					"isMaker": {
-						"type": "boolean",
-						"description": "Whether the trade was a maker or taker"
-					},
-					"fee": {
-						"type": "number",
-						"format": "double",
-						"description": "The fee amount"
-					},
-					"feeAsset": {
-						"type": "string",
-						"description": "The fee asset"
-					},
-					"orderId": {
-						"type": "string",
-						"description": "The order ID associated with the trade"
-					},
-					"clientOrderId": {
-						"type": "string",
-						"description": "The client order ID associated with the trade"
+					"isArchived": {
+						"type": "boolean"
 					}
 				},
 				"required": [
-					"id",
 					"symbol",
-					"price",
-					"quantity",
-					"quoteQuantity",
-					"time",
-					"isBuyer",
-					"isMaker",
-					"orderId"
+					"isArchived"
 				],
 				"type": "object",
 				"additionalProperties": false
 			},
-			"ApiResponse_TradeHistory-Array_": {
+			"Trader": {
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"gate": {
+						"items": {
+							"$ref": "#/components/schemas/CryptoPair"
+						},
+						"type": "array"
+					},
+					"crypto": {
+						"items": {
+							"$ref": "#/components/schemas/CryptoPair"
+						},
+						"type": "array"
+					},
+					"coinbase": {
+						"items": {
+							"$ref": "#/components/schemas/CryptoPair"
+						},
+						"type": "array"
+					},
+					"bybit": {
+						"items": {
+							"$ref": "#/components/schemas/CryptoPair"
+						},
+						"type": "array"
+					},
+					"binance": {
+						"items": {
+							"$ref": "#/components/schemas/CryptoPair"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"gate",
+					"crypto",
+					"coinbase",
+					"bybit",
+					"binance"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ApiResponse_Trader_": {
 				"description": "Base response interface for all API responses",
 				"properties": {
 					"success": {
@@ -90,10 +86,28 @@
 						"description": "Optional error message in case of failure"
 					},
 					"data": {
-						"items": {
-							"$ref": "#/components/schemas/TradeHistory"
-						},
-						"type": "array",
+						"$ref": "#/components/schemas/Trader",
+						"description": "Optional data payload in case of success"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ApiResponse_unknown_": {
+				"description": "Base response interface for all API responses",
+				"properties": {
+					"success": {
+						"type": "boolean",
+						"description": "Indicates if the operation was successful"
+					},
+					"error": {
+						"type": "string",
+						"description": "Optional error message in case of failure"
+					},
+					"data": {
 						"description": "Optional data payload in case of success"
 					}
 				},
@@ -242,6 +256,123 @@
 				],
 				"type": "object",
 				"additionalProperties": false
+			},
+			"TradeHistory": {
+				"description": "Unified trade history model for all exchanges",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The ID of the trade"
+					},
+					"symbol": {
+						"type": "string",
+						"description": "The trading pair symbol"
+					},
+					"price": {
+						"type": "number",
+						"format": "double",
+						"description": "The price at which the trade was executed"
+					},
+					"quantity": {
+						"type": "number",
+						"format": "double",
+						"description": "The quantity of the trade"
+					},
+					"quoteQuantity": {
+						"type": "number",
+						"format": "double",
+						"description": "The total value of the trade (price * quantity)"
+					},
+					"time": {
+						"type": "string",
+						"format": "date-time",
+						"description": "The timestamp of the trade"
+					},
+					"isBuyer": {
+						"type": "boolean",
+						"description": "Whether the trade was a buy or sell"
+					},
+					"isMaker": {
+						"type": "boolean",
+						"description": "Whether the trade was a maker or taker"
+					},
+					"fee": {
+						"type": "number",
+						"format": "double",
+						"description": "The fee amount"
+					},
+					"feeAsset": {
+						"type": "string",
+						"description": "The fee asset"
+					},
+					"orderId": {
+						"type": "string",
+						"description": "The order ID associated with the trade"
+					},
+					"clientOrderId": {
+						"type": "string",
+						"description": "The client order ID associated with the trade"
+					}
+				},
+				"required": [
+					"id",
+					"symbol",
+					"price",
+					"quantity",
+					"quoteQuantity",
+					"time",
+					"isBuyer",
+					"isMaker",
+					"orderId"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ApiResponse_TradeHistory-Array_": {
+				"description": "Base response interface for all API responses",
+				"properties": {
+					"success": {
+						"type": "boolean",
+						"description": "Indicates if the operation was successful"
+					},
+					"error": {
+						"type": "string",
+						"description": "Optional error message in case of failure"
+					},
+					"data": {
+						"items": {
+							"$ref": "#/components/schemas/TradeHistory"
+						},
+						"type": "array",
+						"description": "Optional data payload in case of success"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"UpdateRecentHistoryRequest": {
+				"description": "Request parameters for updating recent history",
+				"properties": {
+					"exchange": {
+						"$ref": "#/components/schemas/ExchangeType",
+						"description": "The exchange to get trade history from",
+						"example": "BINANCE"
+					},
+					"symbol": {
+						"type": "string",
+						"description": "The trading pair symbol",
+						"example": "BTCUSDT"
+					}
+				},
+				"required": [
+					"exchange",
+					"symbol"
+				],
+				"type": "object",
+				"additionalProperties": false
 			}
 		},
 		"securitySchemes": {}
@@ -256,12 +387,188 @@
 		"contact": {}
 	},
 	"paths": {
-		"/trade-history/history": {
+		"/user": {
+			"get": {
+				"operationId": "GetUser",
+				"responses": {
+					"200": {
+						"description": "User",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_Trader_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Get user data",
+				"tags": [
+					"User"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/order": {
+			"get": {
+				"operationId": "GetExchangeRawOrder",
+				"responses": {
+					"200": {
+						"description": "Exchange raw order",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_unknown_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Get exchange raw order",
+				"tags": [
+					"Order"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "exchange",
+						"required": true,
+						"schema": {
+							"$ref": "#/components/schemas/ExchangeType"
+						}
+					},
+					{
+						"in": "query",
+						"name": "orderId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "symbol",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/order/cancel": {
+			"post": {
+				"operationId": "CancelOrder",
+				"responses": {
+					"200": {
+						"description": "Order cancelled successfully",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_null_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Cancels an order on the specified exchange",
+				"tags": [
+					"Order"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"description": "The order cancellation request",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CancelOrderRequest",
+								"description": "The order cancellation request"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/order/cancel-all": {
+			"post": {
+				"operationId": "CancelAllOrders",
+				"responses": {
+					"200": {
+						"description": "All orders cancelled successfully",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_null_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Cancels all orders for a symbol on the specified exchange",
+				"tags": [
+					"Order"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"description": "The order cancellation request",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CancelAllOrdersRequest",
+								"description": "The order cancellation request"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/order/trailing-sell": {
+			"post": {
+				"operationId": "PlaceTrailingTakeProfitLimitSellOrder",
+				"responses": {
+					"200": {
+						"description": "Order placed successfully",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string-or-null_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Places a trailing take profit limit sell order on the specified exchange",
+				"tags": [
+					"Order"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"description": "The order request",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/TrailingTakeProfitLimitSellOrderRequest",
+								"description": "The order request"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/history/history": {
 			"get": {
 				"operationId": "GetTradeHistory",
 				"responses": {
 					"200": {
-						"description": "Trade history response",
+						"description": "Trade history",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -298,123 +605,33 @@
 				]
 			}
 		},
-		"/orders/cancel": {
+		"/history/recent": {
 			"post": {
-				"operationId": "CancelOrder",
+				"operationId": "UpdateRecentHistory",
 				"responses": {
 					"200": {
-						"description": "Order cancelled successfully",
+						"description": "Raw recent filled orders",
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_null_"
+									"$ref": "#/components/schemas/ApiResponse_unknown_"
 								}
 							}
 						}
-					},
-					"400": {
-						"description": "Bad request, missing or invalid parameters"
-					},
-					"500": {
-						"description": "Server error or exchange error"
 					}
 				},
-				"description": "Cancels an order on the specified exchange",
+				"description": "Fetch recent filled orders from the specified exchange and log them",
 				"tags": [
-					"Orders"
+					"Trade History"
 				],
 				"security": [],
 				"parameters": [],
 				"requestBody": {
-					"description": "The order cancellation request",
 					"required": true,
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/CancelOrderRequest",
-								"description": "The order cancellation request"
-							}
-						}
-					}
-				}
-			}
-		},
-		"/orders/cancel-all": {
-			"post": {
-				"operationId": "CancelAllOrders",
-				"responses": {
-					"200": {
-						"description": "All orders cancelled successfully",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_null_"
-								}
-							}
-						}
-					},
-					"400": {
-						"description": "Bad request, missing or invalid parameters"
-					},
-					"500": {
-						"description": "Server error or exchange error"
-					}
-				},
-				"description": "Cancels all orders for a symbol on the specified exchange",
-				"tags": [
-					"Orders"
-				],
-				"security": [],
-				"parameters": [],
-				"requestBody": {
-					"description": "The order cancellation request",
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"$ref": "#/components/schemas/CancelAllOrdersRequest",
-								"description": "The order cancellation request"
-							}
-						}
-					}
-				}
-			}
-		},
-		"/orders/trailing-sell": {
-			"post": {
-				"operationId": "PlaceTrailingTakeProfitLimitSellOrder",
-				"responses": {
-					"200": {
-						"description": "Order placed successfully",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string-or-null_"
-								}
-							}
-						}
-					},
-					"400": {
-						"description": "Bad request, missing or invalid parameters"
-					},
-					"500": {
-						"description": "Server error or exchange error"
-					}
-				},
-				"description": "Places a trailing take profit limit sell order on the specified exchange",
-				"tags": [
-					"Orders"
-				],
-				"security": [],
-				"parameters": [],
-				"requestBody": {
-					"description": "The order request",
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"$ref": "#/components/schemas/TrailingTakeProfitLimitSellOrderRequest",
-								"description": "The order request"
+								"$ref": "#/components/schemas/UpdateRecentHistoryRequest"
 							}
 						}
 					}
