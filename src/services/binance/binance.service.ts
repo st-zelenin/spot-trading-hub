@@ -129,6 +129,28 @@ export class BinanceService implements ExchangeService {
     }
   }
 
+  public async getSymbolsPrice(symbols: string[]): Promise<{ symbol: string; price: string }[]> {
+    try {
+      const response = await this.client.restAPI.tickerPrice({ symbols });
+      const data = await response.data();
+      const prices = data as { symbol: string; price: string }[];
+
+      return prices;
+    } catch (error) {
+      throw this.getExchangeError('Failed to get symbols price', error);
+    }
+  }
+
+  public async getOpenOrders(symbols: string[]): Promise<SpotRestAPI.GetOpenOrdersResponse> {
+    try {
+      const response = await this.client.restAPI.getOpenOrders();
+      const data = await response.data();
+      return data.filter((order) => symbols.includes(order.symbol!));
+    } catch (error) {
+      throw this.getExchangeError('Failed to get open orders', error);
+    }
+  }
+
   private async getExchangeInfo(symbol: string): Promise<SymbolInfo> {
     try {
       if (this.symbolInfoCache.has(symbol)) {
