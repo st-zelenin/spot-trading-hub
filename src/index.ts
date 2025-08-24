@@ -12,6 +12,7 @@ import { setupSwagger } from './config/swagger';
 import { bybitDbService } from './services/bybit/bybit-db.service';
 import { binanceDbService } from './services/binance/binance-db.service';
 import { tradingDbService } from './services/trading/trading-db.service';
+import { mongoDbService } from './services/mongodb/mongodb.service';
 import { CONTAINER_NAMES } from './constants';
 import { errorHandlingMiddleware } from './error-handling.middleware';
 import { startBinanceWssServer } from './binance-wss-server';
@@ -68,11 +69,36 @@ tradingDbService.initialize(CONTAINER_NAMES.Users).catch((error: unknown) => {
 
 // Start the server
 const PORT = env.PORT;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   logger.info(`Server running on port ${PORT}`);
   logger.info(`Swagger documentation available at http://localhost:${PORT}/api-docs`);
 });
 
-startBinanceWssServer();
+// Initialize MongoDB service
+mongoDbService
+  .initialize()
+  .then(() => startBinanceWssServer())
+  .catch((error: unknown) => {
+    logger.error('Failed to initialize MongoDB service', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  });
+
+// Graceful shutdown
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
+process.on('SIGTERM', async () => {
+  logger.info('SIGTERM signal received. Closing HTTP server and database connections.');
+
+  server.close(() => logger.info('HTTP server closed.'));
+
+  try {
+    await mongoDbService.close();
+    logger.info('Database connections closed.');
+    process.exit(0);
+  } catch (error) {
+    logger.error('Error during graceful shutdown:', error);
+    process.exit(1);
+  }
+});
 
 export default app;

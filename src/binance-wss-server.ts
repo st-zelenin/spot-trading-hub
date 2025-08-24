@@ -20,7 +20,7 @@ export const startBinanceWssServer = (): void => {
 
   const clients = new Map<string, WebSocket>();
   const binance = ExchangeFactory.getExchangeService(ExchangeType.BINANCE) as BinanceService;
-  const traidingPairs = ['ZKUSDC', 'STRKUSDC', 'PYTHUSDC', 'ZROUSDC'];
+  const traidingPairs = ['ZKUSDC', 'STRKUSDC', 'PYTHUSDC', 'ZROUSDC', 'APTUSDC'];
 
   const limiter = new Bottleneck({
     minTime: 200, // 5 requests/sec max
@@ -83,14 +83,15 @@ export const startBinanceWssServer = (): void => {
         logger.info('Fetching order details', payload.data);
 
         const { botId, symbol, ids } = payload.data as { botId: string; symbol: string; ids: number[] };
-        ids.forEach((id: number) => {
+        (ids || []).forEach((id: number) => {
           void limiter.schedule(async () => {
             try {
               const order = await binance.getOrder(id.toString(), symbol);
               const ws = clients.get(botId);
+              logger.info('Fetched order details', order);
               ws!.send(JSON.stringify({ type: 'filledOrderDetails', data: order }));
             } catch (err: unknown) {
-              logger.error('Order fetch error', err instanceof Error ? err.message : JSON.stringify(err));
+              logger.error('Order fetch error', { err });
             }
           });
         });

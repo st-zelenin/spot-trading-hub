@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node dist/index.js",
     "build": "npm run tsoa:generate && tsc",
-    "dev": "nodemon",
+    "prod": "npm run build && npm run start",
+    "dev": "dotenv -e .env.dev nodemon",
     "test": "jest",
     "tsoa:generate": "npx tsoa spec-and-routes",
     "lint": "eslint . --ext .ts",
@@ -47,6 +48,7 @@
     "dotenv": "^17.2.1",
     "envalid": "^8.1.0",
     "express": "^5.1.0",
+    "mongodb": "^6.18.0",
     "swagger-ui-express": "^5.0.1",
     "tsoa": "^6.6.0",
     "winston": "^3.17.0",
@@ -55,6 +57,7 @@
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
+    "@types/mongodb": "^4.0.7",
     "@types/node": "^24.3.0",
     "@types/swagger-ui-express": "^4.1.8",
     "@types/yamljs": "^0.2.34",
