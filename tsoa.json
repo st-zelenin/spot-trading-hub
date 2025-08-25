@@ -9,12 +9,20 @@
     "securityDefinitions": {},
     "tags": [
       {
-        "name": "Orders",
+        "name": "Order",
         "description": "Order management endpoints"
       },
       {
         "name": "Trade History",
         "description": "Trade history endpoints"
+      },
+      {
+        "name": "Binance Bot",
+        "description": "Binance bot management endpoints"
+      },
+      {
+        "name": "User",
+        "description": "User management endpoints"
       }
     ]
   },

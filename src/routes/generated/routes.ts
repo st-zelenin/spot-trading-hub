@@ -9,6 +9,8 @@ import { UserController } from './../../controllers/user.controller';
 import { OrderController } from './../../controllers/order.controller';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { TradeHistoryController } from './../../controllers/history.controller';
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { BinanceBotController } from './../../controllers/binance-bot.controller';
 import type { Request as ExRequest, Response as ExResponse, RequestHandler, Router } from 'express';
 
 
@@ -148,6 +150,54 @@ const models: TsoaRoute.Models = {
         "properties": {
             "exchange": {"ref":"ExchangeType","required":true},
             "symbol": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "BinanceBotOrder": {
+        "dataType": "refObject",
+        "properties": {
+            "symbol": {"dataType":"string"},
+            "orderId": {"dataType":"double"},
+            "orderListId": {"dataType":"double"},
+            "clientOrderId": {"dataType":"string"},
+            "price": {"dataType":"string"},
+            "origQty": {"dataType":"string"},
+            "executedQty": {"dataType":"string"},
+            "cummulativeQuoteQty": {"dataType":"string"},
+            "status": {"dataType":"string"},
+            "timeInForce": {"dataType":"string"},
+            "type": {"dataType":"string"},
+            "side": {"dataType":"string"},
+            "stopPrice": {"dataType":"string"},
+            "icebergQty": {"dataType":"string"},
+            "time": {"dataType":"double"},
+            "updateTime": {"dataType":"double"},
+            "isWorking": {"dataType":"boolean"},
+            "workingTime": {"dataType":"double"},
+            "origQuoteOrderQty": {"dataType":"string"},
+            "selfTradePreventionMode": {"dataType":"string"},
+            "botId": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ApiResponse_BinanceBotOrder-Array_": {
+        "dataType": "refObject",
+        "properties": {
+            "success": {"dataType":"boolean","required":true},
+            "error": {"dataType":"string"},
+            "data": {"dataType":"array","array":{"dataType":"refObject","ref":"BinanceBotOrder"}},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ApiResponse_BinanceBotOrder_": {
+        "dataType": "refObject",
+        "properties": {
+            "success": {"dataType":"boolean","required":true},
+            "error": {"dataType":"string"},
+            "data": {"ref":"BinanceBotOrder"},
         },
         "additionalProperties": false,
     },
@@ -370,6 +420,67 @@ export function RegisterRoutes(app: Router) {
 
               await templateService.apiHandler({
                 methodName: 'updateRecentHistory',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsBinanceBotController_getBotOrders: Record<string, TsoaRoute.ParameterSchema> = {
+                botId: {"in":"path","name":"botId","required":true,"dataType":"string"},
+        };
+        app.get('/binance-bot/:botId/orders',
+            ...(fetchMiddlewares<RequestHandler>(BinanceBotController)),
+            ...(fetchMiddlewares<RequestHandler>(BinanceBotController.prototype.getBotOrders)),
+
+            async function BinanceBotController_getBotOrders(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsBinanceBotController_getBotOrders, request, response });
+
+                const controller = new BinanceBotController();
+
+              await templateService.apiHandler({
+                methodName: 'getBotOrders',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsBinanceBotController_addBotOrder: Record<string, TsoaRoute.ParameterSchema> = {
+                botId: {"in":"path","name":"botId","required":true,"dataType":"string"},
+                request: {"in":"body","name":"request","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"symbol":{"dataType":"string","required":true},"orderId":{"dataType":"double","required":true}}},
+        };
+        app.post('/binance-bot/:botId/order-by-id',
+            ...(fetchMiddlewares<RequestHandler>(BinanceBotController)),
+            ...(fetchMiddlewares<RequestHandler>(BinanceBotController.prototype.addBotOrder)),
+
+            async function BinanceBotController_addBotOrder(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsBinanceBotController_addBotOrder, request, response });
+
+                const controller = new BinanceBotController();
+
+              await templateService.apiHandler({
+                methodName: 'addBotOrder',
                 controller,
                 response,
                 next,

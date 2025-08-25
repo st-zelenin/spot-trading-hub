@@ -12,7 +12,7 @@ import { setupSwagger } from './config/swagger';
 import { bybitDbService } from './services/bybit/bybit-db.service';
 import { binanceDbService } from './services/binance/binance-db.service';
 import { tradingDbService } from './services/trading/trading-db.service';
-import { mongoDbService } from './services/mongodb/mongodb.service';
+import { mongoDbService } from './services/base-mongodb.service';
 import { CONTAINER_NAMES } from './constants';
 import { errorHandlingMiddleware } from './error-handling.middleware';
 import { startBinanceWssServer } from './binance-wss-server';

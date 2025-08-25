@@ -373,6 +373,130 @@
 				],
 				"type": "object",
 				"additionalProperties": false
+			},
+			"BinanceBotOrder": {
+				"properties": {
+					"symbol": {
+						"type": "string"
+					},
+					"orderId": {
+						"type": "number",
+						"format": "double"
+					},
+					"orderListId": {
+						"type": "number",
+						"format": "double"
+					},
+					"clientOrderId": {
+						"type": "string"
+					},
+					"price": {
+						"type": "string"
+					},
+					"origQty": {
+						"type": "string"
+					},
+					"executedQty": {
+						"type": "string"
+					},
+					"cummulativeQuoteQty": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					},
+					"timeInForce": {
+						"type": "string"
+					},
+					"type": {
+						"type": "string"
+					},
+					"side": {
+						"type": "string"
+					},
+					"stopPrice": {
+						"type": "string"
+					},
+					"icebergQty": {
+						"type": "string"
+					},
+					"time": {
+						"type": "number",
+						"format": "double"
+					},
+					"updateTime": {
+						"type": "number",
+						"format": "double"
+					},
+					"isWorking": {
+						"type": "boolean"
+					},
+					"workingTime": {
+						"type": "number",
+						"format": "double"
+					},
+					"origQuoteOrderQty": {
+						"type": "string"
+					},
+					"selfTradePreventionMode": {
+						"type": "string"
+					},
+					"botId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"botId"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ApiResponse_BinanceBotOrder-Array_": {
+				"description": "Base response interface for all API responses",
+				"properties": {
+					"success": {
+						"type": "boolean",
+						"description": "Indicates if the operation was successful"
+					},
+					"error": {
+						"type": "string",
+						"description": "Optional error message in case of failure"
+					},
+					"data": {
+						"items": {
+							"$ref": "#/components/schemas/BinanceBotOrder"
+						},
+						"type": "array",
+						"description": "Optional data payload in case of success"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ApiResponse_BinanceBotOrder_": {
+				"description": "Base response interface for all API responses",
+				"properties": {
+					"success": {
+						"type": "boolean",
+						"description": "Indicates if the operation was successful"
+					},
+					"error": {
+						"type": "string",
+						"description": "Optional error message in case of failure"
+					},
+					"data": {
+						"$ref": "#/components/schemas/BinanceBotOrder",
+						"description": "Optional data payload in case of success"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object",
+				"additionalProperties": false
 			}
 		},
 		"securitySchemes": {}
@@ -637,6 +761,97 @@
 					}
 				}
 			}
+		},
+		"/binance-bot/{botId}/orders": {
+			"get": {
+				"operationId": "GetBotOrders",
+				"responses": {
+					"200": {
+						"description": "Bot orders",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_BinanceBotOrder-Array_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Get all orders for a specific bot",
+				"tags": [
+					"Binance Bot"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The ID of the bot",
+						"in": "path",
+						"name": "botId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/binance-bot/{botId}/order-by-id": {
+			"post": {
+				"operationId": "AddBotOrder",
+				"responses": {
+					"200": {
+						"description": "Order",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_BinanceBotOrder_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Add a Binance order to the bot's orders",
+				"tags": [
+					"Binance Bot"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The ID of the bot",
+						"in": "path",
+						"name": "botId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"description": "The order request containing orderId and symbol",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"symbol": {
+										"type": "string"
+									},
+									"orderId": {
+										"type": "number",
+										"format": "double"
+									}
+								},
+								"required": [
+									"symbol",
+									"orderId"
+								],
+								"type": "object",
+								"description": "The order request containing orderId and symbol"
+							}
+						}
+					}
+				}
+			}
 		}
 	},
 	"servers": [
@@ -646,12 +861,20 @@
 	],
 	"tags": [
 		{
-			"name": "Orders",
+			"name": "Order",
 			"description": "Order management endpoints"
 		},
 		{
 			"name": "Trade History",
 			"description": "Trade history endpoints"
+		},
+		{
+			"name": "Binance Bot",
+			"description": "Binance bot management endpoints"
+		},
+		{
+			"name": "User",
+			"description": "User management endpoints"
 		}
 	]
 }

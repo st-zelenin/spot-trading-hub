@@ -33,6 +33,12 @@ export class CosmosError extends BaseApiError {
   }
 }
 
+export class MongoDbError extends BaseApiError {
+  constructor(message: string) {
+    super(message, 400);
+  }
+}
+
 export class InternalServerError extends BaseApiError {
   constructor(message: string = 'Internal server error') {
     super(message, 500);

@@ -22,8 +22,8 @@ export const env = cleanEnv(process.env, {
   COSMOS_DB_COMMON_CONTAINER_NAME: str({ desc: 'Azure Cosmos DB common container name' }),
 
   // MongoDB configuration
-  MONGO_URI: str({ desc: 'MongoDB connection URI', default: 'mongodb://localhost:27017' }),
-  MONGO_DB_NAME: str({ desc: 'MongoDB database name', default: 'binance_bot_db' }),
+  MONGO_URI: str({ desc: 'MongoDB connection URI' }),
+  MONGO_DB_NAME: str({ desc: 'MongoDB database name' }),
 
   // Logging
   LOG_LEVEL: str({
