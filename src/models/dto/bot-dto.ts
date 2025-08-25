@@ -126,3 +126,20 @@ export interface GetOrderResponse {
 export interface BinanceBotOrder extends GetOrderResponse {
   botId: string;
 }
+
+export interface BotConfig {
+  [key: string]: unknown;
+}
+
+export interface BotTradingPair {
+  [key: string]: unknown;
+}
+
+export interface BaseBot {
+  config: BotConfig;
+  pairs: BotTradingPair[];
+}
+
+export interface Bot extends BaseBot {
+  id: string;
+}

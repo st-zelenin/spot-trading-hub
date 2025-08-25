@@ -476,6 +476,86 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"BotConfig": {
+				"properties": {},
+				"type": "object",
+				"additionalProperties": {}
+			},
+			"BotTradingPair": {
+				"properties": {},
+				"type": "object",
+				"additionalProperties": {}
+			},
+			"Bot": {
+				"properties": {
+					"config": {
+						"$ref": "#/components/schemas/BotConfig"
+					},
+					"pairs": {
+						"items": {
+							"$ref": "#/components/schemas/BotTradingPair"
+						},
+						"type": "array"
+					},
+					"id": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"config",
+					"pairs",
+					"id"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ApiResponse_Bot_": {
+				"description": "Base response interface for all API responses",
+				"properties": {
+					"success": {
+						"type": "boolean",
+						"description": "Indicates if the operation was successful"
+					},
+					"error": {
+						"type": "string",
+						"description": "Optional error message in case of failure"
+					},
+					"data": {
+						"$ref": "#/components/schemas/Bot",
+						"description": "Optional data payload in case of success"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ApiResponse_Bot-Array_": {
+				"description": "Base response interface for all API responses",
+				"properties": {
+					"success": {
+						"type": "boolean",
+						"description": "Indicates if the operation was successful"
+					},
+					"error": {
+						"type": "string",
+						"description": "Optional error message in case of failure"
+					},
+					"data": {
+						"items": {
+							"$ref": "#/components/schemas/Bot"
+						},
+						"type": "array",
+						"description": "Optional data payload in case of success"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"ApiResponse_BinanceBotOrder_": {
 				"description": "Base response interface for all API responses",
 				"properties": {
@@ -793,6 +873,188 @@
 						}
 					}
 				]
+			}
+		},
+		"/binance-bot/{botId}": {
+			"get": {
+				"operationId": "GetBot",
+				"responses": {
+					"200": {
+						"description": "Bot",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_Bot_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Get configuration for a specific bot",
+				"tags": [
+					"Binance Bot"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The ID of the bot",
+						"in": "path",
+						"name": "botId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/binance-bot/{botId}/config": {
+			"put": {
+				"operationId": "UpdateBotConfig",
+				"responses": {
+					"200": {
+						"description": "Bot configuration updated",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_null_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Update configuration for a specific bot",
+				"tags": [
+					"Binance Bot"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The ID of the bot",
+						"in": "path",
+						"name": "botId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"description": "The bot configuration",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/BotConfig",
+								"description": "The bot configuration"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/binance-bot/{botId}/pairs": {
+			"put": {
+				"operationId": "UpdateBotPairs",
+				"responses": {
+					"200": {
+						"description": "Bot pairs updated",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_null_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Update trading pairs for a specific bot",
+				"tags": [
+					"Binance Bot"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The ID of the bot",
+						"in": "path",
+						"name": "botId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"description": "The bot trading pairs",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"items": {
+									"$ref": "#/components/schemas/BotTradingPair"
+								},
+								"type": "array",
+								"description": "The bot trading pairs"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/binance-bot": {
+			"post": {
+				"operationId": "CreateBot",
+				"responses": {
+					"201": {
+						"description": "Bot configuration created",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_Bot_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Create configuration for a specific bot",
+				"tags": [
+					"Binance Bot"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"description": "The bot configuration",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/BotConfig",
+								"description": "The bot configuration"
+							}
+						}
+					}
+				}
+			},
+			"get": {
+				"operationId": "GetAllBots",
+				"responses": {
+					"200": {
+						"description": "All bots",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_Bot-Array_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Get all bots",
+				"tags": [
+					"Binance Bot"
+				],
+				"security": [],
+				"parameters": []
 			}
 		},
 		"/binance-bot/{botId}/order-by-id": {

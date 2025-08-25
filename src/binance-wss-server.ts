@@ -4,6 +4,8 @@ import { ExchangeFactory } from './services/exchange-factory.service';
 import { ExchangeType } from './models/exchange';
 import { BinanceService } from './services/binance/binance.service';
 import { logger } from './utils/logger';
+import { mongoDbService } from './services/base-mongodb.service';
+import { BotDbService } from './services/bot/bot-db.service';
 
 export const startBinanceWssServer = (): void => {
   const wss = new WebSocketServer({
@@ -21,6 +23,7 @@ export const startBinanceWssServer = (): void => {
   const clients = new Map<string, WebSocket>();
   const binance = ExchangeFactory.getExchangeService(ExchangeType.BINANCE) as BinanceService;
   const traidingPairs = ['ZKUSDC', 'STRKUSDC', 'PYTHUSDC', 'ZROUSDC', 'APTUSDC'];
+  const botDbService = new BotDbService(mongoDbService);
 
   const limiter = new Bottleneck({
     minTime: 200, // 5 requests/sec max
@@ -87,8 +90,12 @@ export const startBinanceWssServer = (): void => {
           void limiter.schedule(async () => {
             try {
               const order = await binance.getOrder(id.toString(), symbol);
-              const ws = clients.get(botId);
               logger.info('Fetched order details', order);
+
+              await botDbService.insertBotOrder(order, botId);
+              logger.info('Inserted order details', order);
+
+              const ws = clients.get(botId);
               ws!.send(JSON.stringify({ type: 'filledOrderDetails', data: order }));
             } catch (err: unknown) {
               logger.error('Order fetch error', { err });
