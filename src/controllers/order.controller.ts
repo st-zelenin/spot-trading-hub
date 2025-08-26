@@ -105,4 +105,23 @@ export class OrderController extends Controller {
       data: orderId,
     };
   }
+
+  /**
+   * Get all open orders for the specified exchange
+   * @param exchange The exchange type
+   * @returns API response with all open orders
+   */
+  @Get('open')
+  @SuccessResponse('200', 'All open orders')
+  public async getAllOpenOrders(@Query() exchange: ExchangeType): Promise<ApiResponse<unknown[]>> {
+    logger.info(`Fetching all open orders for exchange ${exchange}`);
+
+    const exchangeService = ExchangeFactory.getExchangeService(exchange);
+    const orders = await exchangeService.getAllOpenOrders();
+
+    return {
+      success: true,
+      data: orders,
+    };
+  }
 }

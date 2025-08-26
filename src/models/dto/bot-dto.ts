@@ -138,6 +138,7 @@ export interface BotTradingPair {
 export interface BaseBot {
   config: BotConfig;
   pairs: BotTradingPair[];
+  orderPendingDetails: number[];
 }
 
 export interface Bot extends BaseBot {

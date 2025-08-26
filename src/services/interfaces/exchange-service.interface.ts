@@ -28,6 +28,12 @@ export interface ExchangeService {
    */
   getOrder(orderId: string, symbol: string): Promise<unknown>;
 
+  /**
+   * Gets all open orders from the exchange
+   * @returns A promise that resolves to an array of open orders
+   */
+  getAllOpenOrders(): Promise<unknown[]>;
+
   // Additional methods will be added later for other CRUD operations
   // createOrder(order: Partial<Order>): Promise<OrderResponse>;
   // getOrders(symbol?: string): Promise<OrderResponse>;

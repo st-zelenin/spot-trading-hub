@@ -7,9 +7,9 @@ import { logger } from './utils/logger';
 import { mongoDbService } from './services/base-mongodb.service';
 import { BotDbService } from './services/bot/bot-db.service';
 
-export const startBinanceWssServer = (): void => {
+export const startBinanceWssServer = (port: number): void => {
   const wss = new WebSocketServer({
-    port: 8080,
+    port,
     // host: '0.0.0.0',
     // clientTracking: true,
   });
@@ -18,11 +18,12 @@ export const startBinanceWssServer = (): void => {
     logger.error(`WebSocket server error: ${error.message}`);
   });
 
-  logger.info('WebSocket server started on ws://0.0.0.0:8080');
+  logger.info(`WebSocket server started on ws://0.0.0.0:${port}`);
 
-  const clients = new Map<string, WebSocket>();
+  const clients = new Map<string, { symbol: string; ws: WebSocket }>();
   const binance = ExchangeFactory.getExchangeService(ExchangeType.BINANCE) as BinanceService;
-  const traidingPairs = ['ZKUSDC', 'STRKUSDC', 'PYTHUSDC', 'ZROUSDC', 'APTUSDC'];
+  const traidingPairs = ['ZKUSDC', 'STRKUSDC', 'PYTHUSDC', 'APTUSDC'];
+  // const traidingPairs = ['ZKUSDC', 'STRKUSDC', 'PYTHUSDC', 'ZROUSDC', 'APTUSDC'];
   const botDbService = new BotDbService(mongoDbService);
 
   const limiter = new Bottleneck({
@@ -30,11 +31,13 @@ export const startBinanceWssServer = (): void => {
     maxConcurrent: 1,
   });
 
+  const messagesHandler = new WebSocketMessagesHandler(botDbService, binance, limiter, clients);
+
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   setInterval(async () => {
     try {
       logger.info('Fetching prices and orders');
-      logger.info('Clients count', clients.size);
+      logger.info(`Active clients: ${clients.size}`);
 
       const prices = await binance.getSymbolsPrice(traidingPairs);
 
@@ -44,16 +47,16 @@ export const startBinanceWssServer = (): void => {
 
       logger.info(`Fetched open orders: ${orders.map((o) => `${o.symbol}/${o.orderId}/${o.side}`).join(', ')}`);
 
-      for (const [botId, ws] of clients) {
-        const openOrders = orders.filter((o) => o.symbol === botId);
-        const currentPrice = prices.find((p) => p.symbol === botId)?.price;
+      for (const [botId, { ws, symbol }] of clients) {
+        const openOrders = orders.filter((o) => o.symbol === symbol);
+        const currentPrice = prices.find((p) => p.symbol === symbol)?.price;
 
         logger.info(`Sending open orders and current price to ${botId}`, { openOrders, currentPrice });
 
         ws.send(JSON.stringify({ type: 'openOrdersAndCurrentPrice', data: { openOrders, currentPrice } }));
       }
     } catch (err: unknown) {
-      logger.error('Price fetch error', err instanceof Error ? err.message : JSON.stringify(err));
+      logger.error('Price fetch error', { err });
     }
   }, 60_000);
 
@@ -78,30 +81,18 @@ export const startBinanceWssServer = (): void => {
       if (payload.type === 'register') {
         logger.info('Registering bot', { botId: payload.data });
 
-        botId = payload.data as string;
-        clients.set(botId, ws);
+        const data = payload.data as { botId: string; symbol: string };
+
+        botId = data.botId;
+        clients.set(botId, { symbol: data.symbol, ws });
+        logger.info('Registered bot', { botId, symbol: data.symbol });
       }
 
       if (payload.type === 'filledOrderDetails') {
         logger.info('Fetching order details', payload.data);
 
         const { botId, symbol, ids } = payload.data as { botId: string; symbol: string; ids: number[] };
-        (ids || []).forEach((id: number) => {
-          void limiter.schedule(async () => {
-            try {
-              const order = await binance.getOrder(id.toString(), symbol);
-              logger.info('Fetched order details', order);
-
-              await botDbService.insertBotOrder(order, botId);
-              logger.info('Inserted order details', order);
-
-              const ws = clients.get(botId);
-              ws!.send(JSON.stringify({ type: 'filledOrderDetails', data: order }));
-            } catch (err: unknown) {
-              logger.error('Order fetch error', { err });
-            }
-          });
-        });
+        void messagesHandler.handleFilledOrderDetails(botId, symbol, ids);
       }
     });
 
@@ -112,3 +103,54 @@ export const startBinanceWssServer = (): void => {
     });
   });
 };
+
+export class WebSocketMessagesHandler {
+  constructor(
+    private readonly botDbService: BotDbService,
+    private readonly binanceService: BinanceService,
+    private readonly limiter: Bottleneck,
+    private readonly clients: Map<string, { symbol: string; ws: WebSocket }>
+  ) {}
+
+  public async handleFilledOrderDetails(botId: string, symbol: string, ids: number[]): Promise<void> {
+    try {
+      const bot = await this.botDbService.getBot(botId);
+      const uniqueOrderIds = [...new Set([...bot.orderPendingDetails, ...ids])];
+      const { orderPendingDetails } = await this.botDbService.updateBot(botId, { orderPendingDetails: uniqueOrderIds });
+
+      logger.info('Updated bot order pending details', { botId, orderPendingDetails });
+
+      (ids || []).forEach((id: number) => {
+        void this.limiter.schedule(async () => {
+          try {
+            const order = await this.binanceService.getOrder(id.toString(), symbol);
+            logger.info('Fetched order details', { order });
+
+            await this.botDbService.insertBotOrder(order, botId);
+            logger.info('Inserted order details', { orderId: id });
+
+            await this.removeFromOrdersPendingDetails(botId, id);
+            logger.info('Removed order from orders pending details', { orderId: id });
+
+            const { ws } = this.clients.get(botId)!;
+            ws.send(JSON.stringify({ type: 'filledOrderDetails', data: order }));
+          } catch (err: unknown) {
+            logger.error('Order fetch error', { err });
+          }
+        });
+      });
+    } catch (err: unknown) {
+      logger.error('handleFilledOrderDetails error', { err });
+    }
+  }
+
+  public async removeFromOrdersPendingDetails(botId: string, orderId: number): Promise<void> {
+    try {
+      const bot = await this.botDbService.getBot(botId);
+      const orderPendingDetails = bot.orderPendingDetails.filter((id) => id !== orderId);
+      await this.botDbService.updateBot(botId, { orderPendingDetails });
+    } catch (err: unknown) {
+      logger.error('Failed to remove order from orders pending details', { err });
+    }
+  }
+}

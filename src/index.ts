@@ -77,7 +77,7 @@ const server = app.listen(PORT, () => {
 // Initialize MongoDB service
 mongoDbService
   .initialize()
-  .then(() => startBinanceWssServer())
+  .then(() => startBinanceWssServer(env.WEB_SOCKET_PORT))
   .catch((error: unknown) => {
     logger.error('Failed to initialize MongoDB service', {
       error: error instanceof Error ? error.message : 'Unknown error',

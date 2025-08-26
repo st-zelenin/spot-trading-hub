@@ -48,7 +48,7 @@ export class BinanceBotController extends Controller {
   @Put('{botId}/config')
   @SuccessResponse('200', 'Bot configuration updated')
   public async updateBotConfig(@Path() botId: string, @Body() config: BotConfig): Promise<ApiResponse<null>> {
-    await this.botDbService.updateBotConfig(botId, config);
+    await this.botDbService.updateBot(botId, { config });
     return {
       success: true,
       data: null,
@@ -63,7 +63,7 @@ export class BinanceBotController extends Controller {
   @Put('{botId}/pairs')
   @SuccessResponse('200', 'Bot pairs updated')
   public async updateBotPairs(@Path() botId: string, @Body() pairs: BotTradingPair[]): Promise<ApiResponse<null>> {
-    await this.botDbService.updateBotPairs(botId, pairs);
+    await this.botDbService.updateBot(botId, { pairs });
     return {
       success: true,
       data: null,
@@ -102,9 +102,9 @@ export class BinanceBotController extends Controller {
    * @param botId The ID of the bot
    * @param request The order request containing orderId and symbol
    */
-  @Post('{botId}/order-by-id')
+  @Post('{botId}/filled-order')
   @SuccessResponse('200', 'Order')
-  public async addBotOrder(
+  public async addBotFilledOrder(
     @Path() botId: string,
     @Body() request: { orderId: number; symbol: string }
   ): Promise<ApiResponse<BinanceBotOrder>> {

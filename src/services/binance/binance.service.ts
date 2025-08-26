@@ -15,13 +15,27 @@ export class BinanceService implements ExchangeService {
   private readonly symbolInfoCache: Map<string, SymbolInfo> = new Map();
 
   constructor() {
-    this.client = new Spot({
-      configurationRestAPI: {
-        apiKey: env.BINANCE_API_KEY,
-        apiSecret: env.BINANCE_API_SECRET,
-      },
-    });
-    logger.info('Binance service initialized');
+    if (env.TESTNET) {
+      this.client = new Spot({
+        configurationRestAPI: {
+          apiKey: env.BINANCE_TESTNET_API_KEY,
+          apiSecret: env.BINANCE_TESTNET_API_SECRET,
+          basePath: 'https://testnet.binance.vision',
+        },
+      });
+
+      logger.info('Binance service initialized in TESTNET mode');
+    } else {
+      this.client = new Spot({
+        configurationRestAPI: {
+          apiKey: env.BINANCE_API_KEY,
+          apiSecret: env.BINANCE_API_SECRET,
+          basePath: 'https://api.binance.com',
+        },
+      });
+
+      logger.info('Binance service initialized in LIVE mode');
+    }
   }
 
   public async getSymbolRecentFilledOrders(symbol: string): Promise<SpotRestAPI.AllOrdersResponse> {
@@ -148,6 +162,16 @@ export class BinanceService implements ExchangeService {
       return data.filter((order) => symbols.includes(order.symbol!));
     } catch (error) {
       throw this.getExchangeError('Failed to get open orders', error);
+    }
+  }
+
+  public async getAllOpenOrders(): Promise<SpotRestAPI.GetOpenOrdersResponse> {
+    try {
+      const response = await this.client.restAPI.getOpenOrders();
+      const data = await response.data();
+      return data;
+    } catch (error) {
+      throw this.getExchangeError('Failed to get all open orders', error);
     }
   }
 

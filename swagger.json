@@ -257,6 +257,29 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"ApiResponse_unknown-Array_": {
+				"description": "Base response interface for all API responses",
+				"properties": {
+					"success": {
+						"type": "boolean",
+						"description": "Indicates if the operation was successful"
+					},
+					"error": {
+						"type": "string",
+						"description": "Optional error message in case of failure"
+					},
+					"data": {
+						"items": {},
+						"type": "array",
+						"description": "Optional data payload in case of success"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"TradeHistory": {
 				"description": "Unified trade history model for all exchanges",
 				"properties": {
@@ -497,6 +520,13 @@
 						},
 						"type": "array"
 					},
+					"orderPendingDetails": {
+						"items": {
+							"type": "number",
+							"format": "double"
+						},
+						"type": "array"
+					},
 					"id": {
 						"type": "string"
 					}
@@ -504,6 +534,7 @@
 				"required": [
 					"config",
 					"pairs",
+					"orderPendingDetails",
 					"id"
 				],
 				"type": "object",
@@ -765,6 +796,39 @@
 						}
 					}
 				}
+			}
+		},
+		"/order/open": {
+			"get": {
+				"operationId": "GetAllOpenOrders",
+				"responses": {
+					"200": {
+						"description": "All open orders",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_unknown-Array_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Get all open orders for the specified exchange",
+				"tags": [
+					"Order"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The exchange type",
+						"in": "query",
+						"name": "exchange",
+						"required": true,
+						"schema": {
+							"$ref": "#/components/schemas/ExchangeType"
+						}
+					}
+				]
 			}
 		},
 		"/history/history": {
@@ -1057,9 +1121,9 @@
 				"parameters": []
 			}
 		},
-		"/binance-bot/{botId}/order-by-id": {
+		"/binance-bot/{botId}/filled-order": {
 			"post": {
-				"operationId": "AddBotOrder",
+				"operationId": "AddBotFilledOrder",
 				"responses": {
 					"200": {
 						"description": "Order",

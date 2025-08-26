@@ -116,6 +116,16 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ApiResponse_unknown-Array_": {
+        "dataType": "refObject",
+        "properties": {
+            "success": {"dataType":"boolean","required":true},
+            "error": {"dataType":"string"},
+            "data": {"dataType":"array","array":{"dataType":"any"}},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "TradeHistory": {
         "dataType": "refObject",
         "properties": {
@@ -211,6 +221,7 @@ const models: TsoaRoute.Models = {
         "properties": {
             "config": {"ref":"BotConfig","required":true},
             "pairs": {"dataType":"array","array":{"dataType":"refObject","ref":"BotTradingPair"},"required":true},
+            "orderPendingDetails": {"dataType":"array","array":{"dataType":"double"},"required":true},
             "id": {"dataType":"string","required":true},
         },
         "additionalProperties": false,
@@ -403,6 +414,36 @@ export function RegisterRoutes(app: Router) {
 
               await templateService.apiHandler({
                 methodName: 'placeTrailingTakeProfitLimitSellOrder',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsOrderController_getAllOpenOrders: Record<string, TsoaRoute.ParameterSchema> = {
+                exchange: {"in":"query","name":"exchange","required":true,"ref":"ExchangeType"},
+        };
+        app.get('/order/open',
+            ...(fetchMiddlewares<RequestHandler>(OrderController)),
+            ...(fetchMiddlewares<RequestHandler>(OrderController.prototype.getAllOpenOrders)),
+
+            async function OrderController_getAllOpenOrders(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsOrderController_getAllOpenOrders, request, response });
+
+                const controller = new OrderController();
+
+              await templateService.apiHandler({
+                methodName: 'getAllOpenOrders',
                 controller,
                 response,
                 next,
@@ -656,26 +697,26 @@ export function RegisterRoutes(app: Router) {
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsBinanceBotController_addBotOrder: Record<string, TsoaRoute.ParameterSchema> = {
+        const argsBinanceBotController_addBotFilledOrder: Record<string, TsoaRoute.ParameterSchema> = {
                 botId: {"in":"path","name":"botId","required":true,"dataType":"string"},
                 request: {"in":"body","name":"request","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"symbol":{"dataType":"string","required":true},"orderId":{"dataType":"double","required":true}}},
         };
-        app.post('/binance-bot/:botId/order-by-id',
+        app.post('/binance-bot/:botId/filled-order',
             ...(fetchMiddlewares<RequestHandler>(BinanceBotController)),
-            ...(fetchMiddlewares<RequestHandler>(BinanceBotController.prototype.addBotOrder)),
+            ...(fetchMiddlewares<RequestHandler>(BinanceBotController.prototype.addBotFilledOrder)),
 
-            async function BinanceBotController_addBotOrder(request: ExRequest, response: ExResponse, next: any) {
+            async function BinanceBotController_addBotFilledOrder(request: ExRequest, response: ExResponse, next: any) {
 
             // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 
             let validatedArgs: any[] = [];
             try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsBinanceBotController_addBotOrder, request, response });
+                validatedArgs = templateService.getValidatedArgs({ args: argsBinanceBotController_addBotFilledOrder, request, response });
 
                 const controller = new BinanceBotController();
 
               await templateService.apiHandler({
-                methodName: 'addBotOrder',
+                methodName: 'addBotFilledOrder',
                 controller,
                 response,
                 next,

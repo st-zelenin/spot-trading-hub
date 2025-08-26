@@ -129,6 +129,22 @@ export class BybitService implements ExchangeService {
     }
   }
 
+  public async getAllOpenOrders(): Promise<AccountOrderV5[]> {
+    try {
+      const response = await this.client.getActiveOrders({
+        category: 'spot',
+      });
+
+      if (response.retCode !== 0) {
+        throw new Error(`Failed to get open orders: ${response.retMsg}`);
+      }
+
+      return response.result?.list || [];
+    } catch (error) {
+      throw this.getExchangeError('Failed to get all open orders', error);
+    }
+  }
+
   public async placeTrailingTakeProfitLimitSellOrder(
     symbol: string,
     quantity: number,

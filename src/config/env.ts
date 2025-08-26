@@ -1,4 +1,4 @@
-import { cleanEnv, str, port } from 'envalid';
+import { cleanEnv, str, port, bool } from 'envalid';
 
 /**
  * Validates and provides type-safe access to environment variables
@@ -6,11 +6,15 @@ import { cleanEnv, str, port } from 'envalid';
 export const env = cleanEnv(process.env, {
   // Server configuration
   PORT: port({ default: 3000, desc: 'Port for the API server' }),
+  WEB_SOCKET_PORT: port({ default: 8080, desc: 'Port for the WebSocket server' }),
   NODE_ENV: str({ choices: ['development', 'test', 'production'], default: 'development' }),
+  TESTNET: bool({ default: false }),
 
   // Binance API credentials
   BINANCE_API_KEY: str({ desc: 'Binance API key' }),
   BINANCE_API_SECRET: str({ desc: 'Binance API secret' }),
+  BINANCE_TESTNET_API_KEY: str({ desc: 'Binance Testnet API key' }),
+  BINANCE_TESTNET_API_SECRET: str({ desc: 'Binance Testnet API secret' }),
 
   // Bybit API credentials
   BYBIT_API_KEY: str({ desc: 'Bybit API key' }),
