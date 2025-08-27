@@ -3,8 +3,10 @@ import { ExchangeService } from '../interfaces/exchange-service.interface';
 import { env } from '../../config/env';
 import { logger } from '../../utils/logger';
 import { SymbolInfo } from '../../models/exchange';
+import { Ticker } from '../../models/ticker';
 import Decimal from 'decimal.js';
 import { BaseApiError, ExchangeError, ValidationError } from '../../models/errors';
+import { Trader } from '../../models/dto/user-dto';
 
 /**
  * Binance exchange service implementation
@@ -294,6 +296,43 @@ export class BinanceService implements ExchangeService {
     }
 
     return price;
+  }
+
+  /**
+   * Gets all tickers from Binance in a unified format
+   * @param symbols The symbols to get tickers for
+   * @returns A promise that resolves to a map of unified tickers
+   */
+  public async getTraderTickers(trader: Trader): Promise<Map<string, Ticker>> {
+    try {
+      logger.info('Fetching tickers from Binance');
+
+      const symbols = trader.binance.map((s) => s.symbol);
+
+      logger.info('Fetching tickers for symbols:', { symbols });
+
+      // TODO: remove later
+      const notSupportedSymbols = ['CYBERUSDC', 'MAVUSDC', 'XAIUSDC'];
+      // const t = await this.client.restAPI.ticker({ symbol: 'CYBERUSDC' });
+      // logger.info('t', t);
+
+      const response = await this.client.restAPI.ticker({
+        symbols: symbols.filter((s) => !notSupportedSymbols.includes(s)),
+      });
+      const tickerData = await response.data();
+
+      const tickers = Array.isArray(tickerData) ? tickerData : [tickerData];
+
+      return tickers.reduce((map, ticker) => {
+        map.set(ticker.symbol!, {
+          last: parseFloat(ticker.lastPrice || '0'),
+          changePercentage: parseFloat(ticker.priceChangePercent || '0'),
+        });
+        return map;
+      }, new Map<string, Ticker>());
+    } catch (error) {
+      throw this.getExchangeError('Failed to fetch tickers', error);
+    }
   }
 
   private getExchangeError(baseMessage: string, error: unknown): ExchangeError {

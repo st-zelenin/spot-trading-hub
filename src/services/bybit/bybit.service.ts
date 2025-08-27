@@ -3,8 +3,10 @@ import { ExchangeService } from '../interfaces/exchange-service.interface';
 import { env } from '../../config/env';
 import { logger } from '../../utils/logger';
 import { SymbolInfo } from '../../models/exchange';
+import { Ticker } from '../../models/ticker';
 import Decimal from 'decimal.js';
 import { BaseApiError, ExchangeError, NotFoundError, ValidationError } from '../../models/errors';
+import { Trader } from '../../models/dto/user-dto';
 
 /**
  * Bybit exchange service implementation
@@ -294,6 +296,36 @@ export class BybitService implements ExchangeService {
     }
 
     return price.toString();
+  }
+
+  /**
+   * Gets all tickers from Bybit in a unified format
+   * @param trader The trader to get tickers for
+   * @returns A promise that resolves to an array of unified tickers
+   */
+  public async getTraderTickers(trader: Trader): Promise<Map<string, Ticker>> {
+    try {
+      logger.info('Fetching tickers from Bybit');
+      const response = await this.client.getTickers({
+        category: 'spot',
+      });
+
+      logger.info('Response from Bybit:', { retCode: response.retCode, retMsg: response.retMsg });
+
+      return trader.bybit
+        .map((s) => response.result.list.find((t) => t.symbol === s.symbol))
+        .filter(Boolean)
+        .reduce((map, ticker) => {
+          map.set(ticker!.symbol, {
+            last: parseFloat(ticker!.lastPrice),
+            changePercentage: parseFloat(ticker!.price24hPcnt) * 100,
+          });
+          return map;
+        }, new Map<string, Ticker>());
+    } catch (error) {
+      logger.error('Failed to fetch tickers', { error });
+      throw this.getExchangeError('Failed to fetch tickers', error);
+    }
   }
 
   private getExchangeError(baseMessage: string, error: unknown): ExchangeError {
