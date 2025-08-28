@@ -221,7 +221,6 @@ const models: TsoaRoute.Models = {
         "properties": {
             "config": {"ref":"BotConfig","required":true},
             "pairs": {"dataType":"array","array":{"dataType":"refObject","ref":"BotTradingPair"},"required":true},
-            "orderPendingDetails": {"dataType":"array","array":{"dataType":"double"},"required":true},
             "id": {"dataType":"string","required":true},
         },
         "additionalProperties": false,

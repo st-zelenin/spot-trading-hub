@@ -1,12 +1,15 @@
 import { SpotRestAPI } from '@binance/spot';
 import { MongoDbService } from '../base-mongodb.service';
 import { logger } from '../../utils/logger';
-import { BaseBot, BinanceBotOrder, Bot, BotConfig } from '../../models/dto/bot-dto';
+import { BaseBot, BinanceBotOrder, Bot, BotConfig, FilledOrderQueueItem } from '../../models/dto/bot-dto';
 import { NotFoundError } from '../../models/errors';
 import { ObjectId, WithId } from 'mongodb';
 
 export class BotDbService {
-  constructor(private readonly mongoDbService: MongoDbService) {}
+  constructor(private readonly mongoDbService: MongoDbService) {
+    // Create the unique compound index on botId/orderId when service is initialized
+    void this.ensureFilledOrdersQueueIndex();
+  }
 
   public async insertBotOrder(order: SpotRestAPI.GetOrderResponse, botId: string): Promise<void> {
     try {
@@ -48,7 +51,7 @@ export class BotDbService {
   public async createBot(config: BotConfig): Promise<Bot> {
     try {
       const collection = await this.mongoDbService.getCollection<BaseBot>('bots');
-      const result = await collection.insertOne({ config, pairs: [], orderPendingDetails: [] });
+      const result = await collection.insertOne({ config, pairs: [] });
       const rawBot = await collection.findOne({ _id: result.insertedId });
 
       if (!rawBot) {
@@ -86,10 +89,6 @@ export class BotDbService {
 
       if (data.pairs !== undefined) {
         updateObj.pairs = data.pairs;
-      }
-
-      if (data.orderPendingDetails !== undefined) {
-        updateObj.orderPendingDetails = data.orderPendingDetails;
       }
 
       if (Object.keys(updateObj).length === 0) {
@@ -131,38 +130,105 @@ export class BotDbService {
   }
 
   /**
-   * Add order IDs to the bot's orderPendingDetails array, ensuring uniqueness
-   * @param id The bot ID
-   * @param orderIds Array of order IDs to add
+   * Ensures that the filledOrdersQueue collection has the required indexes
    */
-  public async addOrdersPendingDetails(id: string, orderIds: number[]): Promise<void> {
+  private async ensureFilledOrdersQueueIndex(): Promise<void> {
     try {
-      const collection = await this.mongoDbService.getCollection<BaseBot>('bots');
+      const collection = await this.mongoDbService.getCollection<FilledOrderQueueItem>('filledOrdersQueue');
+      await collection.createIndex({ botId: 1, orderId: 1 }, { unique: true });
+      await collection.createIndex({ detailsFetched: 1, createdAt: 1 });
+      logger.info('Created indexes for filledOrdersQueue collection');
+    } catch (error: unknown) {
+      logger.error('Failed to create indexes for filledOrdersQueue collection', { error });
+    }
+  }
 
-      const bot = await collection.findOne({ _id: new ObjectId(id) });
+  /**
+   * Insert items into the filledOrdersQueue collection
+   * @param items Array of queue items to insert
+   */
+  public async insertFilledOrdersQueue(
+    items: Omit<FilledOrderQueueItem, 'createdAt' | 'detailsFetched'>[]
+  ): Promise<void> {
+    try {
+      const collection = await this.mongoDbService.getCollection<FilledOrderQueueItem>('filledOrdersQueue');
 
-      if (!bot) {
-        throw new NotFoundError(`Bot ${id} not found`);
-      }
+      const itemsWithTimestamp = items.map((item) => ({
+        ...item,
+        createdAt: new Date(),
+        detailsFetched: false,
+      }));
 
-      const existingOrderIds = bot.orderPendingDetails || [];
-      const uniqueOrderIds = [...new Set([...existingOrderIds, ...orderIds])];
+      const result = await collection.insertMany(itemsWithTimestamp, { ordered: false });
+
+      logger.info(`Inserted ${result.insertedCount} items into filledOrdersQueue`, {
+        insertedCount: result.insertedCount,
+        totalItems: items.length,
+      });
+    } catch (error: unknown) {
+      throw this.mongoDbService.getMongoDbError('Failed to insert items into filledOrdersQueue', error);
+    }
+  }
+
+  /**
+   * Get unprocessed items from the filledOrdersQueue
+   * @param limit Maximum number of items to retrieve
+   */
+  public async getUnprocessedFilledOrders(limit: number): Promise<FilledOrderQueueItem[]> {
+    try {
+      const collection = await this.mongoDbService.getCollection<FilledOrderQueueItem>('filledOrdersQueue');
+
+      const items = await collection.find({ detailsFetched: false }).sort({ createdAt: 1 }).limit(limit).toArray();
+
+      logger.info(`Retrieved ${items.length} unprocessed items from filledOrdersQueue`);
+      return items;
+    } catch (error: unknown) {
+      throw this.mongoDbService.getMongoDbError('Failed to get unprocessed items from filledOrdersQueue', error);
+    }
+  }
+
+  /**
+   * Mark a queue item as processed
+   * @param botId Bot ID
+   * @param orderId Order ID
+   */
+  public async markFilledOrderAsProcessed(botId: string, orderId: number): Promise<void> {
+    try {
+      const collection = await this.mongoDbService.getCollection<FilledOrderQueueItem>('filledOrdersQueue');
 
       const result = await collection.updateOne(
-        { _id: new ObjectId(id) },
-        { $set: { orderPendingDetails: uniqueOrderIds } }
+        { botId, orderId },
+        { $set: { detailsFetched: true, processedAt: new Date() } }
       );
 
       if (!result.matchedCount) {
-        throw new NotFoundError(`Bot ${id} not found`);
+        logger.warn(`No matching order found to mark as processed`, { botId, orderId });
+      } else {
+        logger.info(`Marked order as processed`, { botId, orderId });
       }
-
-      logger.info(`Updated orderPendingDetails for bot ${id}, added ${orderIds.length} order IDs`, {
-        addedIds: orderIds,
-        totalUniqueIds: uniqueOrderIds.length,
-      });
     } catch (error: unknown) {
-      throw this.mongoDbService.getMongoDbError('Failed to add orders pending details to bot', error);
+      throw this.mongoDbService.getMongoDbError('Failed to mark order as processed', error);
+    }
+  }
+
+  /**
+   * Clean up processed items older than the specified age
+   * @param maxAgeMs Maximum age in milliseconds
+   */
+  public async cleanupProcessedFilledOrders(maxAgeMs: number): Promise<void> {
+    try {
+      const collection = await this.mongoDbService.getCollection<FilledOrderQueueItem>('filledOrdersQueue');
+
+      const cutoffDate = new Date(Date.now() - maxAgeMs);
+
+      const result = await collection.deleteMany({
+        detailsFetched: true,
+        processedAt: { $lt: cutoffDate },
+      });
+
+      logger.info(`Cleaned up ${result.deletedCount} processed items from filledOrdersQueue`);
+    } catch (error: unknown) {
+      logger.error('Failed to clean up processed items from filledOrdersQueue', { error });
     }
   }
 

@@ -138,9 +138,17 @@ export interface BotTradingPair {
 export interface BaseBot {
   config: BotConfig;
   pairs: BotTradingPair[];
-  orderPendingDetails: number[];
 }
 
 export interface Bot extends BaseBot {
   id: string;
+}
+
+export interface FilledOrderQueueItem {
+  botId: string;
+  orderId: number;
+  symbol: string;
+  detailsFetched: boolean;
+  createdAt: Date;
+  processedAt?: Date;
 }

@@ -8,15 +8,9 @@ import { mongoDbService } from './services/base-mongodb.service';
 import { BotDbService } from './services/bot/bot-db.service';
 
 export const startBinanceWssServer = (port: number): void => {
-  const wss = new WebSocketServer({
-    port,
-    // host: '0.0.0.0',
-    // clientTracking: true,
-  });
+  const wss = new WebSocketServer({ port });
 
-  wss.on('error', (error) => {
-    logger.error(`WebSocket server error: ${error.message}`);
-  });
+  wss.on('error', (error) => logger.error(`WebSocket server error: ${error.message}`));
 
   logger.info(`WebSocket server started on ws://0.0.0.0:${port}`);
 
@@ -30,8 +24,6 @@ export const startBinanceWssServer = (port: number): void => {
     minTime: 200, // 5 requests/sec max
     maxConcurrent: 1,
   });
-
-  const messagesHandler = new WebSocketMessagesHandler(botDbService, binance, limiter, clients);
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   setInterval(async () => {
@@ -59,6 +51,9 @@ export const startBinanceWssServer = (port: number): void => {
       logger.error('Price fetch error', { err });
     }
   }, 60_000);
+
+  // Start the filled orders processor
+  startFilledOrdersProcessor(botDbService, binance, limiter, clients);
 
   wss.on('connection', (ws) => {
     let botId = '';
@@ -92,7 +87,7 @@ export const startBinanceWssServer = (port: number): void => {
         logger.info('Fetching order details', payload.data);
 
         const { botId, symbol, ids } = payload.data as { botId: string; symbol: string; ids: number[] };
-        void messagesHandler.handleFilledOrderDetails(botId, symbol, ids);
+        void handleFilledOrderDetails(botId, symbol, ids, botDbService);
       }
     });
 
@@ -104,53 +99,75 @@ export const startBinanceWssServer = (port: number): void => {
   });
 };
 
-export class WebSocketMessagesHandler {
-  constructor(
-    private readonly botDbService: BotDbService,
-    private readonly binanceService: BinanceService,
-    private readonly limiter: Bottleneck,
-    private readonly clients: Map<string, { symbol: string; ws: WebSocket }>
-  ) {}
-
-  public async handleFilledOrderDetails(botId: string, symbol: string, ids: number[]): Promise<void> {
+/**
+ * Start the interval-based processor for filled orders queue
+ */
+export const startFilledOrdersProcessor = (
+  botDbService: BotDbService,
+  binanceService: BinanceService,
+  limiter: Bottleneck,
+  clients: Map<string, { symbol: string; ws: WebSocket }>
+): void => {
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  setInterval(async () => {
     try {
-      const bot = await this.botDbService.getBot(botId);
-      const uniqueOrderIds = [...new Set([...bot.orderPendingDetails, ...ids])];
-      const { orderPendingDetails } = await this.botDbService.updateBot(botId, { orderPendingDetails: uniqueOrderIds });
+      const unprocessedItems = await botDbService.getUnprocessedFilledOrders(10);
+      if (!unprocessedItems.length) {
+        return;
+      }
 
-      logger.info('Updated bot order pending details', { botId, orderPendingDetails });
+      logger.info(`Processing ${unprocessedItems.length} filled orders from queue`);
 
-      (ids || []).forEach((id: number) => {
-        void this.limiter.schedule(async () => {
+      for (const item of unprocessedItems) {
+        void limiter.schedule(async () => {
           try {
-            const order = await this.binanceService.getOrder(id.toString(), symbol);
+            const order = await binanceService.getOrder(item.orderId.toString(), item.symbol);
             logger.info('Fetched order details', { order });
 
-            await this.botDbService.insertBotOrder(order, botId);
-            logger.info('Inserted order details', { orderId: id });
+            await botDbService.insertBotOrder(order, item.botId);
 
-            await this.removeFromOrdersPendingDetails(botId, id);
-            logger.info('Removed order from orders pending details', { orderId: id });
+            await botDbService.markFilledOrderAsProcessed(item.botId, item.orderId);
 
-            const { ws } = this.clients.get(botId)!;
-            ws.send(JSON.stringify({ type: 'filledOrderDetails', data: order }));
+            const client = clients.get(item.botId);
+            if (client) {
+              client.ws.send(JSON.stringify({ type: 'filledOrderDetails', data: order }));
+            }
           } catch (err: unknown) {
-            logger.error('Order fetch error', { err });
+            logger.error('Failed to process filled order', {
+              botId: item.botId,
+              orderId: item.orderId,
+              symbol: item.symbol,
+              error: err,
+            });
           }
         });
-      });
-    } catch (err: unknown) {
-      logger.error('handleFilledOrderDetails error', { err });
-    }
-  }
+      }
 
-  public async removeFromOrdersPendingDetails(botId: string, orderId: number): Promise<void> {
-    try {
-      const bot = await this.botDbService.getBot(botId);
-      const orderPendingDetails = bot.orderPendingDetails.filter((id) => id !== orderId);
-      await this.botDbService.updateBot(botId, { orderPendingDetails });
+      // Clean up processed items older than 7 days
+      void botDbService.cleanupProcessedFilledOrders(7 * 24 * 60 * 60 * 1000);
     } catch (err: unknown) {
-      logger.error('Failed to remove order from orders pending details', { err });
+      logger.error('Error in filled orders processor', { err });
     }
+  }, 5_000);
+};
+
+async function handleFilledOrderDetails(
+  botId: string,
+  symbol: string,
+  ids: number[],
+  botDbService: BotDbService
+): Promise<void> {
+  try {
+    const queueItems = ids.map((orderId) => ({
+      botId,
+      orderId,
+      symbol,
+    }));
+
+    await botDbService.insertFilledOrdersQueue(queueItems);
+
+    logger.info('Added filled orders to processing queue', { queueItems });
+  } catch (err: unknown) {
+    logger.error('handleFilledOrderDetails error', { err });
   }
 }

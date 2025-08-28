@@ -520,13 +520,6 @@
 						},
 						"type": "array"
 					},
-					"orderPendingDetails": {
-						"items": {
-							"type": "number",
-							"format": "double"
-						},
-						"type": "array"
-					},
 					"id": {
 						"type": "string"
 					}
@@ -534,7 +527,6 @@
 				"required": [
 					"config",
 					"pairs",
-					"orderPendingDetails",
 					"id"
 				],
 				"type": "object",

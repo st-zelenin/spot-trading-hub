@@ -63,6 +63,12 @@ export class BaseMongoDbService implements MongoDbService {
         await collection.createIndex({ orderId: 1 }, { unique: true });
       }
 
+      if (collectionName === 'filledOrdersQueue') {
+        logger.info('Creating index on botId field for filledOrdersQueue collection');
+        await collection.createIndex({ botId: 1, orderId: 1 }, { unique: true });
+        await collection.createIndex({ detailsFetched: 1, createdAt: 1 });
+      }
+
       this.collections.set(collectionName, collection as unknown as Collection<Document>);
       return collection;
     } catch (error) {
