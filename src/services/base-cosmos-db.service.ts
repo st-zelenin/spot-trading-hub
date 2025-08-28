@@ -78,7 +78,7 @@ export class BaseCosmosDbService implements CosmosDbService {
    * @param containerId The ID of the container
    * @returns The container
    */
-  private async getContainer(containerId: string): Promise<Container> {
+  public async getContainer(containerId: string): Promise<Container> {
     if (this.containers.has(containerId)) {
       return this.containers.get(containerId)!;
     }

@@ -2,6 +2,9 @@
  * Interface for exchange services following the Interface Segregation Principle
  * Each method represents a specific operation that can be performed on an exchange
  */
+import { Trader } from '../../models/dto/user-dto';
+import { Ticker } from '../../models/ticker';
+
 export interface ExchangeService {
   /**
    * Cancels an order on the exchange
@@ -33,6 +36,13 @@ export interface ExchangeService {
    * @returns A promise that resolves to an array of open orders
    */
   getAllOpenOrders(): Promise<unknown[]>;
+
+  /**
+   * Gets all tickers from the exchange in a unified format
+   * @param trader The trader to get tickers for
+   * @returns A promise that resolves to a map of unified tickers
+   */
+  getTraderTickers(trader: Trader): Promise<Map<string, Ticker>>;
 
   // Additional methods will be added later for other CRUD operations
   // createOrder(order: Partial<Order>): Promise<OrderResponse>;

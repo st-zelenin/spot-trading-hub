@@ -397,6 +397,55 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"Ticker": {
+				"description": "Unified ticker interface for all exchanges",
+				"properties": {
+					"last": {
+						"type": "number",
+						"format": "double"
+					},
+					"changePercentage": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"last",
+					"changePercentage"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"Record_string.Ticker_": {
+				"properties": {},
+				"additionalProperties": {
+					"$ref": "#/components/schemas/Ticker"
+				},
+				"type": "object",
+				"description": "Construct a type with a set of properties K of type T"
+			},
+			"ApiResponse_Record_string.Ticker__": {
+				"description": "Base response interface for all API responses",
+				"properties": {
+					"success": {
+						"type": "boolean",
+						"description": "Indicates if the operation was successful"
+					},
+					"error": {
+						"type": "string",
+						"description": "Optional error message in case of failure"
+					},
+					"data": {
+						"$ref": "#/components/schemas/Record_string.Ticker_",
+						"description": "Optional data payload in case of success"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"BinanceBotOrder": {
 				"properties": {
 					"symbol": {
@@ -597,6 +646,61 @@
 				},
 				"required": [
 					"success"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"MigrationResult": {
+				"properties": {
+					"ordersProcessed": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"ordersProcessed"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ApiResponse_MigrationResult_": {
+				"description": "Base response interface for all API responses",
+				"properties": {
+					"success": {
+						"type": "boolean",
+						"description": "Indicates if the operation was successful"
+					},
+					"error": {
+						"type": "string",
+						"description": "Optional error message in case of failure"
+					},
+					"data": {
+						"$ref": "#/components/schemas/MigrationResult",
+						"description": "Optional data payload in case of success"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"MigrateSymbolRequest": {
+				"properties": {
+					"from": {
+						"type": "string",
+						"description": "The symbol to migrate from",
+						"example": "CYBERUSDT"
+					},
+					"to": {
+						"type": "string",
+						"description": "The symbol to migrate to",
+						"example": "CYBERUSDC"
+					}
+				},
+				"required": [
+					"from",
+					"to"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -898,6 +1002,39 @@
 				}
 			}
 		},
+		"/exchange/trader-tickers": {
+			"get": {
+				"operationId": "GetTraderTickers",
+				"responses": {
+					"200": {
+						"description": "Tickers retrieved successfully",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_Record_string.Ticker__"
+								}
+							}
+						}
+					}
+				},
+				"description": "Get tickers from a specific exchange",
+				"tags": [
+					"Exchange"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The exchange to get tickers from",
+						"in": "query",
+						"name": "exchange",
+						"required": true,
+						"schema": {
+							"$ref": "#/components/schemas/ExchangeType"
+						}
+					}
+				]
+			}
+		},
 		"/binance-bot/{botId}/orders": {
 			"get": {
 				"operationId": "GetBotOrders",
@@ -1165,6 +1302,41 @@
 								],
 								"type": "object",
 								"description": "The order request containing orderId and symbol"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/admin/migrate-symbol": {
+			"post": {
+				"operationId": "MigrateSymbol",
+				"responses": {
+					"200": {
+						"description": "Symbol migration completed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_MigrationResult_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Migrate orders from one symbol to another",
+				"tags": [
+					"Admin"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"description": "The migration request containing from and to symbols",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/MigrateSymbolRequest",
+								"description": "The migration request containing from and to symbols"
 							}
 						}
 					}
