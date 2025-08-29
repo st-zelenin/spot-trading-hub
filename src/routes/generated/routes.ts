@@ -55,6 +55,20 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ExchangeType": {
+        "dataType": "refEnum",
+        "enums": ["BINANCE","BYBIT"],
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OrderedSymbols": {
+        "dataType": "refObject",
+        "properties": {
+            "exchange": {"ref":"ExchangeType","required":true},
+            "symbols": {"dataType":"array","array":{"dataType":"string"},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "ApiResponse_unknown_": {
         "dataType": "refObject",
         "properties": {
@@ -63,11 +77,6 @@ const models: TsoaRoute.Models = {
             "data": {"dataType":"any"},
         },
         "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "ExchangeType": {
-        "dataType": "refEnum",
-        "enums": ["BINANCE","BYBIT"],
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "ApiResponse_null_": {
@@ -188,6 +197,27 @@ const models: TsoaRoute.Models = {
             "success": {"dataType":"boolean","required":true},
             "error": {"dataType":"string"},
             "data": {"ref":"Record_string.Ticker_"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Product": {
+        "dataType": "refObject",
+        "properties": {
+            "currencyPair": {"dataType":"string","required":true},
+            "minQuantity": {"dataType":"double","required":true},
+            "minTotal": {"dataType":"double","required":true},
+            "pricePrecision": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ApiResponse_Product-Array_": {
+        "dataType": "refObject",
+        "properties": {
+            "success": {"dataType":"boolean","required":true},
+            "error": {"dataType":"string"},
+            "data": {"dataType":"array","array":{"dataType":"refObject","ref":"Product"}},
         },
         "additionalProperties": false,
     },
@@ -346,6 +376,98 @@ export function RegisterRoutes(app: Router) {
 
               await templateService.apiHandler({
                 methodName: 'getUser',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsUserController_orderPairs: Record<string, TsoaRoute.ParameterSchema> = {
+                requestBody: {"in":"body","name":"requestBody","required":true,"ref":"OrderedSymbols"},
+        };
+        app.post('/user/pairs/order',
+            ...(fetchMiddlewares<RequestHandler>(UserController)),
+            ...(fetchMiddlewares<RequestHandler>(UserController.prototype.orderPairs)),
+
+            async function UserController_orderPairs(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsUserController_orderPairs, request, response });
+
+                const controller = new UserController();
+
+              await templateService.apiHandler({
+                methodName: 'orderPairs',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsUserController_addPair: Record<string, TsoaRoute.ParameterSchema> = {
+                exchange: {"in":"path","name":"exchange","required":true,"ref":"ExchangeType"},
+                symbol: {"in":"path","name":"symbol","required":true,"dataType":"string"},
+        };
+        app.post('/user/pairs/add/:exchange/:symbol',
+            ...(fetchMiddlewares<RequestHandler>(UserController)),
+            ...(fetchMiddlewares<RequestHandler>(UserController.prototype.addPair)),
+
+            async function UserController_addPair(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsUserController_addPair, request, response });
+
+                const controller = new UserController();
+
+              await templateService.apiHandler({
+                methodName: 'addPair',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsUserController_removePair: Record<string, TsoaRoute.ParameterSchema> = {
+                exchange: {"in":"path","name":"exchange","required":true,"ref":"ExchangeType"},
+                symbol: {"in":"path","name":"symbol","required":true,"dataType":"string"},
+        };
+        app.delete('/user/pairs/remove/:exchange/:symbol',
+            ...(fetchMiddlewares<RequestHandler>(UserController)),
+            ...(fetchMiddlewares<RequestHandler>(UserController.prototype.removePair)),
+
+            async function UserController_removePair(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsUserController_removePair, request, response });
+
+                const controller = new UserController();
+
+              await templateService.apiHandler({
+                methodName: 'removePair',
                 controller,
                 response,
                 next,
@@ -589,6 +711,36 @@ export function RegisterRoutes(app: Router) {
 
               await templateService.apiHandler({
                 methodName: 'getTraderTickers',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsExchangeController_getProducts: Record<string, TsoaRoute.ParameterSchema> = {
+                exchange: {"in":"query","name":"exchange","required":true,"ref":"ExchangeType"},
+        };
+        app.get('/exchange/products',
+            ...(fetchMiddlewares<RequestHandler>(ExchangeController)),
+            ...(fetchMiddlewares<RequestHandler>(ExchangeController.prototype.getProducts)),
+
+            async function ExchangeController_getProducts(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsExchangeController_getProducts, request, response });
+
+                const controller = new ExchangeController();
+
+              await templateService.apiHandler({
+                methodName: 'getProducts',
                 controller,
                 response,
                 next,

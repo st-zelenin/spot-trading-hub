@@ -4,7 +4,7 @@ module.exports = {
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
     'plugin:@typescript-eslint/recommended-requiring-type-checking',
-    'prettier'
+    'prettier',
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
@@ -15,10 +15,10 @@ module.exports = {
   plugins: ['@typescript-eslint', 'prettier'],
   rules: {
     'prettier/prettier': 'error',
-    'max-len': ['warn', { 'code': 120 }],
+    'max-len': ['warn', { code: 120 }],
     'require-jsdoc': 'off',
     'valid-jsdoc': 'off',
-    'indent': 'off', // Disabled in favor of prettier
+    indent: 'off', // Disabled in favor of prettier
     '@typescript-eslint/no-explicit-any': 'error',
     '@typescript-eslint/explicit-member-accessibility': [
       'error',
@@ -41,6 +41,8 @@ module.exports = {
       },
     ],
     '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    '@typescript-eslint/no-unsafe-argument': 'warn',
+    '@typescript-eslint/no-unsafe-assignment': 'warn',
     'object-curly-spacing': ['error', 'always'],
   },
   ignorePatterns: ['dist/', 'node_modules/', '**/*.js', '!.eslintrc.js'],

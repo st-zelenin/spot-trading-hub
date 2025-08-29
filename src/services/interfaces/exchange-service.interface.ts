@@ -4,6 +4,7 @@
  */
 import { Trader } from '../../models/dto/user-dto';
 import { Ticker } from '../../models/ticker';
+import { Product } from '../../models/product';
 
 export interface ExchangeService {
   /**
@@ -43,6 +44,12 @@ export interface ExchangeService {
    * @returns A promise that resolves to a map of unified tickers
    */
   getTraderTickers(trader: Trader): Promise<Map<string, Ticker>>;
+
+  /**
+   * Gets all available trading products/pairs from the exchange
+   * @returns A promise that resolves to an array of unified product information
+   */
+  getProducts(): Promise<Product[]>;
 
   // Additional methods will be added later for other CRUD operations
   // createOrder(order: Partial<Order>): Promise<OrderResponse>;

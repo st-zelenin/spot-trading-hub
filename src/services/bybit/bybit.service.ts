@@ -4,6 +4,7 @@ import { env } from '../../config/env';
 import { logger } from '../../utils/logger';
 import { SymbolInfo } from '../../models/exchange';
 import { Ticker } from '../../models/ticker';
+import { Product } from '../../models/product';
 import Decimal from 'decimal.js';
 import { BaseApiError, ExchangeError, NotFoundError, ValidationError } from '../../models/errors';
 import { Trader } from '../../models/dto/user-dto';
@@ -325,6 +326,37 @@ export class BybitService implements ExchangeService {
     } catch (error) {
       logger.error('Failed to fetch tickers', { error });
       throw this.getExchangeError('Failed to fetch tickers', error);
+    }
+  }
+
+  /**
+   * Gets all available trading products/pairs from Bybit
+   * @returns A promise that resolves to an array of unified product information
+   */
+  public async getProducts(): Promise<Product[]> {
+    try {
+      logger.info('Fetching products from Bybit');
+
+      const response = await this.client.getInstrumentsInfo({
+        category: 'spot',
+      });
+
+      if (response.retCode !== 0) {
+        throw new Error(`Failed to fetch products: ${response.retMsg}`);
+      }
+
+      const symbols = response.result?.list || [];
+
+      return symbols
+        .filter((symbol) => symbol.status === 'Trading')
+        .map<Product>((symbol) => ({
+          currencyPair: symbol.symbol,
+          minQuantity: symbol.lotSizeFilter?.minOrderQty ? parseFloat(symbol.lotSizeFilter.minOrderQty) : 0,
+          minTotal: symbol.lotSizeFilter?.minOrderAmt ? parseFloat(symbol.lotSizeFilter.minOrderAmt) : 0,
+          pricePrecision: symbol.priceFilter?.tickSize ? parseFloat(symbol.priceFilter.tickSize) : 0,
+        }));
+    } catch (error) {
+      throw this.getExchangeError('Failed to fetch products', error);
     }
   }
 

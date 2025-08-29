@@ -74,7 +74,7 @@ export class BinanceBotController extends Controller {
    * Create configuration for a specific bot
    * @param config The bot configuration
    */
-  @Post('')
+  @Post()
   @SuccessResponse('201', 'Bot configuration created')
   public async createBot(@Body() config: BotConfig): Promise<ApiResponse<Bot>> {
     const bot = await this.botDbService.createBot(config);
@@ -87,7 +87,7 @@ export class BinanceBotController extends Controller {
   /**
    * Get all bots
    */
-  @Get('')
+  @Get()
   @SuccessResponse('200', 'All bots')
   public async getAllBots(): Promise<ApiResponse<Bot[]>> {
     const bots = await this.botDbService.getAllBots();

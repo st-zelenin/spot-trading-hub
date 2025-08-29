@@ -4,6 +4,7 @@ import { ExchangeType } from '../models/exchange';
 import { logger } from '../utils/logger';
 import { ExchangeFactory } from '../services/exchange-factory.service';
 import { Ticker } from '../models/ticker';
+import { Product } from '../models/product';
 import { TradingService } from '../services/trading/trading.service';
 import { tradingDbService } from '../services/trading/trading-db.service';
 
@@ -32,6 +33,27 @@ export class ExchangeController extends Controller {
     return {
       success: true,
       data: Object.fromEntries(Array.from(tickers.entries())) as Record<string, Ticker>,
+    };
+  }
+
+  /**
+   * Get available trading products/pairs from a specific exchange
+   * @param exchange The exchange to get products from
+   * @returns Unified product information
+   */
+  @Get('products')
+  @SuccessResponse('200', 'Products retrieved successfully')
+  public async getProducts(@Query() exchange: ExchangeType): Promise<ApiResponse<Product[]>> {
+    logger.info(`Fetching products for exchange: ${exchange}`);
+
+    const exchangeService = ExchangeFactory.getExchangeService(exchange);
+    const products = await exchangeService.getProducts();
+
+    logger.info(`Successfully fetched ${products.length} products for ${exchange}`);
+
+    return {
+      success: true,
+      data: products,
     };
   }
 }

@@ -4,6 +4,7 @@ import { env } from '../../config/env';
 import { logger } from '../../utils/logger';
 import { SymbolInfo } from '../../models/exchange';
 import { Ticker } from '../../models/ticker';
+import { Product } from '../../models/product';
 import Decimal from 'decimal.js';
 import { BaseApiError, ExchangeError, ValidationError } from '../../models/errors';
 import { Trader } from '../../models/dto/user-dto';
@@ -332,6 +333,40 @@ export class BinanceService implements ExchangeService {
       }, new Map<string, Ticker>());
     } catch (error) {
       throw this.getExchangeError('Failed to fetch tickers', error);
+    }
+  }
+
+  /**
+   * Gets all available trading products/pairs from Binance
+   * @returns A promise that resolves to an array of unified product information
+   */
+  public async getProducts(): Promise<Product[]> {
+    try {
+      logger.info('Fetching products from Binance');
+
+      const response = await this.client.restAPI.exchangeInfo();
+      const exchangeInfo = await response.data();
+
+      if (!exchangeInfo.symbols) {
+        throw new Error('symbols not found in exchangeInfo');
+      }
+
+      return exchangeInfo.symbols
+        .filter((symbol) => symbol.status === 'TRADING')
+        .map<Product>((symbol) => {
+          const minNotional = symbol.filters?.find((f) => f.filterType === 'MIN_NOTIONAL');
+          const lotSize = symbol.filters?.find((f) => f.filterType === 'LOT_SIZE');
+          const priceFilter = symbol.filters?.find((f) => f.filterType === 'PRICE_FILTER');
+
+          return {
+            currencyPair: symbol.symbol!,
+            minQuantity: lotSize?.minQty ? parseFloat(lotSize.minQty) : 0,
+            minTotal: minNotional?.minNotional ? parseFloat(minNotional.minNotional) : 0,
+            pricePrecision: priceFilter?.tickSize ? parseFloat(priceFilter.tickSize) : 0,
+          };
+        });
+    } catch (error) {
+      throw this.getExchangeError('Failed to fetch products', error);
     }
   }
 

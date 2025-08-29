@@ -3,23 +3,7 @@ import { ApiResponse } from '../models/dto/response-dto';
 import { logger } from '../utils/logger';
 import { binanceDbService } from '../services/binance/binance-db.service';
 import { CONTAINER_NAMES } from '../constants';
-
-interface MigrateSymbolRequest {
-  /**
-   * The symbol to migrate from
-   * @example "CYBERUSDT"
-   */
-  from: string;
-  /**
-   * The symbol to migrate to
-   * @example "CYBERUSDC"
-   */
-  to: string;
-}
-
-interface MigrationResult {
-  ordersProcessed: number;
-}
+import { MigrateSymbolRequest, MigrationResult } from '../models/dto/admin-dto';
 
 @Route('admin')
 @Tags('Admin')

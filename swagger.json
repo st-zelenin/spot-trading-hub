@@ -96,6 +96,36 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"ExchangeType": {
+				"description": "Enum representing supported exchanges",
+				"enum": [
+					"BINANCE",
+					"BYBIT"
+				],
+				"type": "string"
+			},
+			"OrderedSymbols": {
+				"description": "Request payload for ordering cryptocurrency pairs",
+				"properties": {
+					"exchange": {
+						"$ref": "#/components/schemas/ExchangeType",
+						"description": "The exchange for which the symbols are being ordered"
+					},
+					"symbols": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array",
+						"description": "The ordered list of symbols"
+					}
+				},
+				"required": [
+					"exchange",
+					"symbols"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"ApiResponse_unknown_": {
 				"description": "Base response interface for all API responses",
 				"properties": {
@@ -116,14 +146,6 @@
 				],
 				"type": "object",
 				"additionalProperties": false
-			},
-			"ExchangeType": {
-				"description": "Enum representing supported exchanges",
-				"enum": [
-					"BINANCE",
-					"BYBIT"
-				],
-				"type": "string"
 			},
 			"ApiResponse_null_": {
 				"description": "Base response interface for all API responses",
@@ -446,6 +468,59 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"Product": {
+				"description": "Unified product model for exchange products/trading pairs",
+				"properties": {
+					"currencyPair": {
+						"type": "string"
+					},
+					"minQuantity": {
+						"type": "number",
+						"format": "double"
+					},
+					"minTotal": {
+						"type": "number",
+						"format": "double"
+					},
+					"pricePrecision": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"currencyPair",
+					"minQuantity",
+					"minTotal",
+					"pricePrecision"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ApiResponse_Product-Array_": {
+				"description": "Base response interface for all API responses",
+				"properties": {
+					"success": {
+						"type": "boolean",
+						"description": "Indicates if the operation was successful"
+					},
+					"error": {
+						"type": "string",
+						"description": "Optional error message in case of failure"
+					},
+					"data": {
+						"items": {
+							"$ref": "#/components/schemas/Product"
+						},
+						"type": "array",
+						"description": "Optional data payload in case of success"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"BinanceBotOrder": {
 				"properties": {
 					"symbol": {
@@ -654,7 +729,8 @@
 				"properties": {
 					"ordersProcessed": {
 						"type": "number",
-						"format": "double"
+						"format": "double",
+						"description": "Number of orders that were processed during migration"
 					}
 				},
 				"required": [
@@ -723,7 +799,7 @@
 				"operationId": "GetUser",
 				"responses": {
 					"200": {
-						"description": "User",
+						"description": "User data retrieved successfully",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -739,6 +815,125 @@
 				],
 				"security": [],
 				"parameters": []
+			}
+		},
+		"/user/pairs/order": {
+			"post": {
+				"operationId": "OrderPairs",
+				"responses": {
+					"200": {
+						"description": "Pairs ordered successfully",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_Trader_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Order cryptocurrency pairs according to user preference",
+				"tags": [
+					"User"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"description": "The ordered symbols payload",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/OrderedSymbols",
+								"description": "The ordered symbols payload"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/user/pairs/add/{exchange}/{symbol}": {
+			"post": {
+				"operationId": "AddPair",
+				"responses": {
+					"200": {
+						"description": "Pair added successfully",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_Trader_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Add a cryptocurrency pair to user's list",
+				"tags": [
+					"User"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The exchange type",
+						"in": "path",
+						"name": "exchange",
+						"required": true,
+						"schema": {
+							"$ref": "#/components/schemas/ExchangeType"
+						}
+					},
+					{
+						"description": "The symbol to add",
+						"in": "path",
+						"name": "symbol",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/user/pairs/remove/{exchange}/{symbol}": {
+			"delete": {
+				"operationId": "RemovePair",
+				"responses": {
+					"200": {
+						"description": "Pair removed successfully",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_Trader_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Remove a cryptocurrency pair from user's list",
+				"tags": [
+					"User"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The exchange type",
+						"in": "path",
+						"name": "exchange",
+						"required": true,
+						"schema": {
+							"$ref": "#/components/schemas/ExchangeType"
+						}
+					},
+					{
+						"description": "The symbol to remove",
+						"in": "path",
+						"name": "symbol",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
 			}
 		},
 		"/order": {
@@ -1025,6 +1220,39 @@
 				"parameters": [
 					{
 						"description": "The exchange to get tickers from",
+						"in": "query",
+						"name": "exchange",
+						"required": true,
+						"schema": {
+							"$ref": "#/components/schemas/ExchangeType"
+						}
+					}
+				]
+			}
+		},
+		"/exchange/products": {
+			"get": {
+				"operationId": "GetProducts",
+				"responses": {
+					"200": {
+						"description": "Products retrieved successfully",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_Product-Array_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Get available trading products/pairs from a specific exchange",
+				"tags": [
+					"Exchange"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The exchange to get products from",
 						"in": "query",
 						"name": "exchange",
 						"required": true,

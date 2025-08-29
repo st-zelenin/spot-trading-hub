@@ -16,8 +16,7 @@ export const startBinanceWssServer = (port: number): void => {
 
   const clients = new Map<string, { symbol: string; ws: WebSocket }>();
   const binance = ExchangeFactory.getExchangeService(ExchangeType.BINANCE) as BinanceService;
-  const traidingPairs = ['ZKUSDC', 'STRKUSDC', 'PYTHUSDC', 'APTUSDC'];
-  // const traidingPairs = ['ZKUSDC', 'STRKUSDC', 'PYTHUSDC', 'ZROUSDC', 'APTUSDC'];
+  const traidingPairs = ['ZKUSDC', 'STRKUSDC', 'PYTHUSDC', 'ZROUSDC', 'APTUSDC', 'WUSDC'];
   const botDbService = new BotDbService(mongoDbService);
 
   const limiter = new Bottleneck({
@@ -40,6 +39,11 @@ export const startBinanceWssServer = (port: number): void => {
       logger.info(`Fetched open orders: ${orders.map((o) => `${o.symbol}/${o.orderId}/${o.side}`).join(', ')}`);
 
       for (const [botId, { ws, symbol }] of clients) {
+        if (!traidingPairs.includes(symbol)) {
+          logger.warn(`Symbol ${symbol} is not in the traiding pairs list`, { traidingPairs });
+          continue;
+        }
+
         const openOrders = orders.filter((o) => o.symbol === symbol);
         const currentPrice = prices.find((p) => p.symbol === symbol)?.price;
 
@@ -81,6 +85,10 @@ export const startBinanceWssServer = (port: number): void => {
         botId = data.botId;
         clients.set(botId, { symbol: data.symbol, ws });
         logger.info('Registered bot', { botId, symbol: data.symbol });
+
+        if (!traidingPairs.includes(data.symbol)) {
+          logger.warn(`Symbol ${data.symbol} is not in the traiding pairs list`, { traidingPairs });
+        }
       }
 
       if (payload.type === 'filledOrderDetails') {
