@@ -6,6 +6,8 @@ import {  fetchMiddlewares, ExpressTemplateService } from '@tsoa/runtime';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { UserController } from './../../controllers/user.controller';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { TradingPairController } from './../../controllers/trading-pair.controller';
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { OrderController } from './../../controllers/order.controller';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { TradeHistoryController } from './../../controllers/history.controller';
@@ -67,6 +69,56 @@ const models: TsoaRoute.Models = {
             "symbols": {"dataType":"array","array":{"dataType":"string"},"required":true},
         },
         "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TradingPair": {
+        "dataType": "refObject",
+        "properties": {
+            "buyPrice": {"dataType":"double","required":true},
+            "sellPrice": {"dataType":"double","required":true},
+            "quantity": {"dataType":"double","required":true},
+            "buyOrderId": {"dataType":"double"},
+            "sellOrderId": {"dataType":"double"},
+            "id": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ApiResponse_TradingPair-Array_": {
+        "dataType": "refObject",
+        "properties": {
+            "success": {"dataType":"boolean","required":true},
+            "error": {"dataType":"string"},
+            "data": {"dataType":"array","array":{"dataType":"refObject","ref":"TradingPair"}},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "NewTradingPair": {
+        "dataType": "refObject",
+        "properties": {
+            "buyPrice": {"dataType":"double","required":true},
+            "sellPrice": {"dataType":"double","required":true},
+            "quantity": {"dataType":"double","required":true},
+            "buyOrderId": {"dataType":"double"},
+            "sellOrderId": {"dataType":"double"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ApiResponse_TradingPair_": {
+        "dataType": "refObject",
+        "properties": {
+            "success": {"dataType":"boolean","required":true},
+            "error": {"dataType":"string"},
+            "data": {"ref":"TradingPair"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Partial_NewTradingPair_": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"buyPrice":{"dataType":"double"},"sellPrice":{"dataType":"double"},"quantity":{"dataType":"double"},"buyOrderId":{"dataType":"double"},"sellOrderId":{"dataType":"double"}},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "ApiResponse_unknown_": {
@@ -222,6 +274,28 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SymbolInfo": {
+        "dataType": "refObject",
+        "properties": {
+            "baseAsset": {"dataType":"string","required":true},
+            "quoteAsset": {"dataType":"string","required":true},
+            "stepSize": {"dataType":"string","required":true},
+            "tickSize": {"dataType":"string","required":true},
+            "minNotional": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ApiResponse_SymbolInfo_": {
+        "dataType": "refObject",
+        "properties": {
+            "success": {"dataType":"boolean","required":true},
+            "error": {"dataType":"string"},
+            "data": {"ref":"SymbolInfo"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "BinanceBotOrder": {
         "dataType": "refObject",
         "properties": {
@@ -304,12 +378,44 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OrderStatistics": {
+        "dataType": "refObject",
+        "properties": {
+            "buyOrdersCount": {"dataType":"double","required":true},
+            "sellOrdersCount": {"dataType":"double","required":true},
+            "totalBuyAmount": {"dataType":"double","required":true},
+            "totalSellAmount": {"dataType":"double","required":true},
+            "profitLoss": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ApiResponse_OrderStatistics_": {
+        "dataType": "refObject",
+        "properties": {
+            "success": {"dataType":"boolean","required":true},
+            "error": {"dataType":"string"},
+            "data": {"ref":"OrderStatistics"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "ApiResponse_BinanceBotOrder_": {
         "dataType": "refObject",
         "properties": {
             "success": {"dataType":"boolean","required":true},
             "error": {"dataType":"string"},
             "data": {"ref":"BinanceBotOrder"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ApiResponse__ordersDeleted-number--testnetOrdersDeleted-number--filledOrdersQueueDeleted-number--testnetFilledOrdersQueueDeleted-number--botDeleted-boolean__": {
+        "dataType": "refObject",
+        "properties": {
+            "success": {"dataType":"boolean","required":true},
+            "error": {"dataType":"string"},
+            "data": {"dataType":"nestedObjectLiteral","nestedProperties":{"botDeleted":{"dataType":"boolean","required":true},"testnetFilledOrdersQueueDeleted":{"dataType":"double","required":true},"filledOrdersQueueDeleted":{"dataType":"double","required":true},"testnetOrdersDeleted":{"dataType":"double","required":true},"ordersDeleted":{"dataType":"double","required":true}}},
         },
         "additionalProperties": false,
     },
@@ -468,6 +574,98 @@ export function RegisterRoutes(app: Router) {
 
               await templateService.apiHandler({
                 methodName: 'removePair',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsTradingPairController_getAllTradingPairs: Record<string, TsoaRoute.ParameterSchema> = {
+                botId: {"in":"query","name":"botId","required":true,"dataType":"string"},
+        };
+        app.get('/trading-pairs',
+            ...(fetchMiddlewares<RequestHandler>(TradingPairController)),
+            ...(fetchMiddlewares<RequestHandler>(TradingPairController.prototype.getAllTradingPairs)),
+
+            async function TradingPairController_getAllTradingPairs(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsTradingPairController_getAllTradingPairs, request, response });
+
+                const controller = new TradingPairController();
+
+              await templateService.apiHandler({
+                methodName: 'getAllTradingPairs',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsTradingPairController_createTradingPairs: Record<string, TsoaRoute.ParameterSchema> = {
+                botId: {"in":"query","name":"botId","required":true,"dataType":"string"},
+                pairs: {"in":"body","name":"pairs","required":true,"dataType":"array","array":{"dataType":"refObject","ref":"NewTradingPair"}},
+        };
+        app.post('/trading-pairs',
+            ...(fetchMiddlewares<RequestHandler>(TradingPairController)),
+            ...(fetchMiddlewares<RequestHandler>(TradingPairController.prototype.createTradingPairs)),
+
+            async function TradingPairController_createTradingPairs(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsTradingPairController_createTradingPairs, request, response });
+
+                const controller = new TradingPairController();
+
+              await templateService.apiHandler({
+                methodName: 'createTradingPairs',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 201,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsTradingPairController_updateTradingPair: Record<string, TsoaRoute.ParameterSchema> = {
+                id: {"in":"path","name":"id","required":true,"dataType":"string"},
+                data: {"in":"body","name":"data","required":true,"ref":"Partial_NewTradingPair_"},
+        };
+        app.put('/trading-pairs/:id',
+            ...(fetchMiddlewares<RequestHandler>(TradingPairController)),
+            ...(fetchMiddlewares<RequestHandler>(TradingPairController.prototype.updateTradingPair)),
+
+            async function TradingPairController_updateTradingPair(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsTradingPairController_updateTradingPair, request, response });
+
+                const controller = new TradingPairController();
+
+              await templateService.apiHandler({
+                methodName: 'updateTradingPair',
                 controller,
                 response,
                 next,
@@ -693,9 +891,9 @@ export function RegisterRoutes(app: Router) {
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsExchangeController_getTraderTickers: Record<string, TsoaRoute.ParameterSchema> = {
-                exchange: {"in":"query","name":"exchange","required":true,"ref":"ExchangeType"},
+                exchange: {"in":"path","name":"exchange","required":true,"ref":"ExchangeType"},
         };
-        app.get('/exchange/trader-tickers',
+        app.get('/exchange/:exchange/trader-tickers',
             ...(fetchMiddlewares<RequestHandler>(ExchangeController)),
             ...(fetchMiddlewares<RequestHandler>(ExchangeController.prototype.getTraderTickers)),
 
@@ -723,9 +921,9 @@ export function RegisterRoutes(app: Router) {
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsExchangeController_getProducts: Record<string, TsoaRoute.ParameterSchema> = {
-                exchange: {"in":"query","name":"exchange","required":true,"ref":"ExchangeType"},
+                exchange: {"in":"path","name":"exchange","required":true,"ref":"ExchangeType"},
         };
-        app.get('/exchange/products',
+        app.get('/exchange/:exchange/products',
             ...(fetchMiddlewares<RequestHandler>(ExchangeController)),
             ...(fetchMiddlewares<RequestHandler>(ExchangeController.prototype.getProducts)),
 
@@ -741,6 +939,37 @@ export function RegisterRoutes(app: Router) {
 
               await templateService.apiHandler({
                 methodName: 'getProducts',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsExchangeController_getSymbolInfo: Record<string, TsoaRoute.ParameterSchema> = {
+                symbol: {"in":"path","name":"symbol","required":true,"dataType":"string"},
+                exchange: {"in":"path","name":"exchange","required":true,"ref":"ExchangeType"},
+        };
+        app.get('/exchange/:exchange/symbol/:symbol',
+            ...(fetchMiddlewares<RequestHandler>(ExchangeController)),
+            ...(fetchMiddlewares<RequestHandler>(ExchangeController.prototype.getSymbolInfo)),
+
+            async function ExchangeController_getSymbolInfo(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsExchangeController_getSymbolInfo, request, response });
+
+                const controller = new ExchangeController();
+
+              await templateService.apiHandler({
+                methodName: 'getSymbolInfo',
                 controller,
                 response,
                 next,
@@ -933,6 +1162,65 @@ export function RegisterRoutes(app: Router) {
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsBinanceBotController_getOrderStatistics: Record<string, TsoaRoute.ParameterSchema> = {
+        };
+        app.get('/binance-bot/statistics/all',
+            ...(fetchMiddlewares<RequestHandler>(BinanceBotController)),
+            ...(fetchMiddlewares<RequestHandler>(BinanceBotController.prototype.getOrderStatistics)),
+
+            async function BinanceBotController_getOrderStatistics(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsBinanceBotController_getOrderStatistics, request, response });
+
+                const controller = new BinanceBotController();
+
+              await templateService.apiHandler({
+                methodName: 'getOrderStatistics',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsBinanceBotController_getBotStatistics: Record<string, TsoaRoute.ParameterSchema> = {
+                botId: {"in":"path","name":"botId","required":true,"dataType":"string"},
+        };
+        app.get('/binance-bot/:botId/statistics',
+            ...(fetchMiddlewares<RequestHandler>(BinanceBotController)),
+            ...(fetchMiddlewares<RequestHandler>(BinanceBotController.prototype.getBotStatistics)),
+
+            async function BinanceBotController_getBotStatistics(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsBinanceBotController_getBotStatistics, request, response });
+
+                const controller = new BinanceBotController();
+
+              await templateService.apiHandler({
+                methodName: 'getBotStatistics',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsBinanceBotController_addBotFilledOrder: Record<string, TsoaRoute.ParameterSchema> = {
                 botId: {"in":"path","name":"botId","required":true,"dataType":"string"},
                 request: {"in":"body","name":"request","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"symbol":{"dataType":"string","required":true},"orderId":{"dataType":"double","required":true}}},
@@ -953,6 +1241,36 @@ export function RegisterRoutes(app: Router) {
 
               await templateService.apiHandler({
                 methodName: 'addBotFilledOrder',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsBinanceBotController_cleanupTestnetBot: Record<string, TsoaRoute.ParameterSchema> = {
+                botId: {"in":"path","name":"botId","required":true,"dataType":"string"},
+        };
+        app.delete('/binance-bot/cleanup/testnet/:botId',
+            ...(fetchMiddlewares<RequestHandler>(BinanceBotController)),
+            ...(fetchMiddlewares<RequestHandler>(BinanceBotController.prototype.cleanupTestnetBot)),
+
+            async function BinanceBotController_cleanupTestnetBot(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsBinanceBotController_cleanupTestnetBot, request, response });
+
+                const controller = new BinanceBotController();
+
+              await templateService.apiHandler({
+                methodName: 'cleanupTestnetBot',
                 controller,
                 response,
                 next,

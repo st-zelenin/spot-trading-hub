@@ -2,8 +2,10 @@ import { SpotRestAPI } from '@binance/spot';
 import { MongoDbService } from '../base-mongodb.service';
 import { logger } from '../../utils/logger';
 import { BaseBot, BinanceBotOrder, Bot, BotConfig, FilledOrderQueueItem } from '../../models/dto/bot-dto';
-import { NotFoundError } from '../../models/errors';
-import { ObjectId, WithId } from 'mongodb';
+import { NotFoundError, ValidationError } from '../../models/errors';
+import { Document, ObjectId, WithId } from 'mongodb';
+import { env } from '../../config/env';
+import { OrderStatistics, OrderStatisticsResult } from '../../models/dto/statistics.dto';
 
 export class BotDbService {
   constructor(private readonly mongoDbService: MongoDbService) {
@@ -11,9 +13,18 @@ export class BotDbService {
     void this.ensureFilledOrdersQueueIndex();
   }
 
+  /**
+   * Gets the appropriate collection name based on testnet flag
+   * @param baseCollectionName The base collection name
+   * @returns The collection name with testnet prefix if in testnet mode
+   */
+  private getCollectionName(baseCollectionName: string): string {
+    return env.TESTNET ? `testnet_${baseCollectionName}` : baseCollectionName;
+  }
+
   public async insertBotOrder(order: SpotRestAPI.GetOrderResponse, botId: string): Promise<void> {
     try {
-      const collection = await this.mongoDbService.getCollection<BinanceBotOrder>('orders');
+      const collection = await this.mongoDbService.getCollection<BinanceBotOrder>(this.getCollectionName('orders'));
       const result = await collection.insertOne({ ...order, botId: botId });
       logger.info(`Inserted order ${order.orderId} for bot ${botId}`, { result });
     } catch (error: unknown) {
@@ -23,7 +34,7 @@ export class BotDbService {
 
   public async getBotOrders(botId: string): Promise<BinanceBotOrder[]> {
     try {
-      const collection = await this.mongoDbService.getCollection<BinanceBotOrder>('orders');
+      const collection = await this.mongoDbService.getCollection<BinanceBotOrder>(this.getCollectionName('orders'));
       const orders = await collection.find({ botId }).toArray();
       logger.info(`Found ${orders.length} orders for bot ${botId}`);
       return orders;
@@ -134,7 +145,9 @@ export class BotDbService {
    */
   private async ensureFilledOrdersQueueIndex(): Promise<void> {
     try {
-      const collection = await this.mongoDbService.getCollection<FilledOrderQueueItem>('filledOrdersQueue');
+      const collection = await this.mongoDbService.getCollection<FilledOrderQueueItem>(
+        this.getCollectionName('filledOrdersQueue')
+      );
       await collection.createIndex({ botId: 1, orderId: 1 }, { unique: true });
       await collection.createIndex({ detailsFetched: 1, createdAt: 1 });
       logger.info('Created indexes for filledOrdersQueue collection');
@@ -151,7 +164,9 @@ export class BotDbService {
     items: Omit<FilledOrderQueueItem, 'createdAt' | 'detailsFetched'>[]
   ): Promise<void> {
     try {
-      const collection = await this.mongoDbService.getCollection<FilledOrderQueueItem>('filledOrdersQueue');
+      const collection = await this.mongoDbService.getCollection<FilledOrderQueueItem>(
+        this.getCollectionName('filledOrdersQueue')
+      );
 
       const itemsWithTimestamp = items.map((item) => ({
         ...item,
@@ -176,7 +191,9 @@ export class BotDbService {
    */
   public async getUnprocessedFilledOrders(limit: number): Promise<FilledOrderQueueItem[]> {
     try {
-      const collection = await this.mongoDbService.getCollection<FilledOrderQueueItem>('filledOrdersQueue');
+      const collection = await this.mongoDbService.getCollection<FilledOrderQueueItem>(
+        this.getCollectionName('filledOrdersQueue')
+      );
 
       const items = await collection.find({ detailsFetched: false }).sort({ createdAt: 1 }).limit(limit).toArray();
 
@@ -194,7 +211,9 @@ export class BotDbService {
    */
   public async markFilledOrderAsProcessed(botId: string, orderId: number): Promise<void> {
     try {
-      const collection = await this.mongoDbService.getCollection<FilledOrderQueueItem>('filledOrdersQueue');
+      const collection = await this.mongoDbService.getCollection<FilledOrderQueueItem>(
+        this.getCollectionName('filledOrdersQueue')
+      );
 
       const result = await collection.updateOne(
         { botId, orderId },
@@ -217,7 +236,9 @@ export class BotDbService {
    */
   public async cleanupProcessedFilledOrders(maxAgeMs: number): Promise<void> {
     try {
-      const collection = await this.mongoDbService.getCollection<FilledOrderQueueItem>('filledOrdersQueue');
+      const collection = await this.mongoDbService.getCollection<FilledOrderQueueItem>(
+        this.getCollectionName('filledOrdersQueue')
+      );
 
       const cutoffDate = new Date(Date.now() - maxAgeMs);
 
@@ -238,5 +259,162 @@ export class BotDbService {
       id: _id.toString(),
       ...rest,
     } as T & { id: string };
+  }
+
+  /**
+   * Creates a MongoDB aggregation pipeline for order statistics
+   * @returns MongoDB aggregation pipeline
+   */
+  private createOrderStatisticsPipeline(): Document[] {
+    return [
+      {
+        $facet: {
+          buyStats: [
+            { $match: { side: 'BUY', status: 'FILLED' } },
+            {
+              $group: {
+                _id: null,
+                count: { $sum: 1 },
+                total: {
+                  $sum: { $toDouble: { $ifNull: ['$cummulativeQuoteQty', 0] } },
+                },
+              },
+            },
+          ],
+          sellStats: [
+            { $match: { side: 'SELL', status: 'FILLED' } },
+            {
+              $group: {
+                _id: null,
+                count: { $sum: 1 },
+                total: {
+                  $sum: { $toDouble: { $ifNull: ['$cummulativeQuoteQty', 0] } },
+                },
+              },
+            },
+          ],
+        },
+      },
+    ];
+  }
+
+  /**
+   * Processes the results from the order statistics pipeline
+   * @param results The results from the aggregation pipeline
+   * @returns Formatted order statistics
+   */
+  private processOrderStatisticsResults(results: OrderStatisticsResult): OrderStatistics {
+    const buyOrdersCount = results.buyStats[0]?.count || 0;
+    const sellOrdersCount = results.sellStats[0]?.count || 0;
+    const totalBuyAmount = results.buyStats[0]?.total || 0;
+    const totalSellAmount = results.sellStats[0]?.total || 0;
+    const profitLoss = totalSellAmount - totalBuyAmount;
+
+    return {
+      buyOrdersCount,
+      sellOrdersCount,
+      totalBuyAmount,
+      totalSellAmount,
+      profitLoss,
+    };
+  }
+
+  /**
+   * Get statistics for all orders
+   * @returns Statistics including buy/sell counts and amounts
+   */
+  public async getOrderStatistics(): Promise<OrderStatistics> {
+    try {
+      const ordersCollection = await this.mongoDbService.getCollection('orders');
+
+      const pipeline = this.createOrderStatisticsPipeline();
+      const [results] = await ordersCollection.aggregate<OrderStatisticsResult>(pipeline).toArray();
+
+      return this.processOrderStatisticsResults(results);
+    } catch (error) {
+      throw this.mongoDbService.getMongoDbError('Failed to get order statistics', error);
+    }
+  }
+
+  /**
+   * Get statistics for a specific bot's orders
+   * @param botId The ID of the bot
+   * @returns Statistics including buy/sell counts and amounts for the specified bot
+   */
+  public async getBotOrderStatistics(botId: string): Promise<OrderStatistics> {
+    try {
+      const ordersCollection = await this.mongoDbService.getCollection('orders');
+
+      const pipeline = this.createOrderStatisticsPipeline();
+      pipeline.unshift({ $match: { botId } });
+      const [results] = await ordersCollection.aggregate<OrderStatisticsResult>(pipeline).toArray();
+
+      return this.processOrderStatisticsResults(results);
+    } catch (error) {
+      throw this.mongoDbService.getMongoDbError('Failed to get bot order statistics', error);
+    }
+  }
+
+  /**
+   * Cleanup all data related to a testnet bot
+   * @param botId Bot ID to cleanup
+   * @returns Object containing counts of deleted items
+   * @throws Error if bot is not in testnet mode or if app is not running in testnet mode
+   */
+  public async cleanupTestnetBot(botId: string): Promise<{
+    ordersDeleted: number;
+    testnetOrdersDeleted: number;
+    filledOrdersQueueDeleted: number;
+    testnetFilledOrdersQueueDeleted: number;
+    botDeleted: boolean;
+  }> {
+    // Validate that the app is running in testnet mode
+    if (!env.TESTNET) {
+      throw new ValidationError('Cleanup can only be performed in testnet mode');
+    }
+
+    // Get the bot to validate it's in testnet mode
+    const bot = await this.getBot(botId);
+    if (!bot || !bot.config || bot.config.mode !== 'testnet') {
+      throw new ValidationError('Bot not found or not in testnet mode');
+    }
+
+    const result = {
+      ordersDeleted: 0,
+      testnetOrdersDeleted: 0,
+      filledOrdersQueueDeleted: 0,
+      testnetFilledOrdersQueueDeleted: 0,
+      botDeleted: false,
+    };
+
+    try {
+      // Clean up orders in both regular and testnet collections
+      const ordersCollection = await this.mongoDbService.getCollection('orders');
+      const deleteOrdersResult = await ordersCollection.deleteMany({ botId });
+      result.ordersDeleted = deleteOrdersResult.deletedCount;
+
+      const testnetOrdersCollection = await this.mongoDbService.getCollection('testnet_orders');
+      const deleteTestnetOrdersResult = await testnetOrdersCollection.deleteMany({ botId });
+      result.testnetOrdersDeleted = deleteTestnetOrdersResult.deletedCount;
+
+      // Clean up filled orders queue in both regular and testnet collections
+      const filledOrdersQueueCollection = await this.mongoDbService.getCollection('filledOrdersQueue');
+      const deleteFilledOrdersResult = await filledOrdersQueueCollection.deleteMany({ botId });
+      result.filledOrdersQueueDeleted = deleteFilledOrdersResult.deletedCount;
+
+      const testnetFilledOrdersQueueCollection = await this.mongoDbService.getCollection('testnet_filledOrdersQueue');
+      const deleteTestnetFilledOrdersResult = await testnetFilledOrdersQueueCollection.deleteMany({ botId });
+      result.testnetFilledOrdersQueueDeleted = deleteTestnetFilledOrdersResult.deletedCount;
+
+      // Delete the bot
+      const botsCollection = await this.mongoDbService.getCollection('bots');
+      const deleteBotResult = await botsCollection.deleteOne({ _id: new ObjectId(botId) });
+      result.botDeleted = deleteBotResult.deletedCount > 0;
+
+      logger.info('Cleaned up testnet bot data', { botId, result });
+      return result;
+    } catch (error: unknown) {
+      throw this.mongoDbService.getMongoDbError('Failed to cleanup testnet bot data', error);
+    }
   }
 }

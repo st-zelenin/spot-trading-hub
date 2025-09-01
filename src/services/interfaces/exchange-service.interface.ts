@@ -5,6 +5,7 @@
 import { Trader } from '../../models/dto/user-dto';
 import { Ticker } from '../../models/ticker';
 import { Product } from '../../models/product';
+import { SymbolInfo } from '../../models/exchange';
 
 export interface ExchangeService {
   /**
@@ -50,6 +51,13 @@ export interface ExchangeService {
    * @returns A promise that resolves to an array of unified product information
    */
   getProducts(): Promise<Product[]>;
+
+  /**
+   * Gets exchange information for a specific symbol
+   * @param symbol The trading pair symbol
+   * @returns A promise that resolves to symbol information
+   */
+  getExchangeInfo(symbol: string): Promise<SymbolInfo>;
 
   // Additional methods will be added later for other CRUD operations
   // createOrder(order: Partial<Order>): Promise<OrderResponse>;

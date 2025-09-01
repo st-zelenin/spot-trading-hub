@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Path, Post, Put, Route, SuccessResponse, Tags } from 'tsoa';
+import { Body, Controller, Delete, Get, Path, Post, Put, Route, SuccessResponse, Tags } from 'tsoa';
 import { ExchangeType } from '../models/exchange';
 import { BinanceService } from '../services/binance/binance.service';
 import { ExchangeFactory } from '../services/exchange-factory.service';
@@ -6,6 +6,7 @@ import { ApiResponse } from '../models/dto/response-dto';
 import { BotDbService } from '../services/bot/bot-db.service';
 import { mongoDbService } from '../services/base-mongodb.service';
 import { BinanceBotOrder, Bot, BotConfig, BotTradingPair } from '../models/dto/bot-dto';
+import { OrderStatistics } from '../models/dto/statistics.dto';
 
 @Route('binance-bot')
 @Tags('Binance Bot')
@@ -98,6 +99,33 @@ export class BinanceBotController extends Controller {
   }
 
   /**
+   * Get statistics for all orders
+   */
+  @Get('statistics/all')
+  @SuccessResponse('200', 'Order statistics')
+  public async getOrderStatistics(): Promise<ApiResponse<OrderStatistics>> {
+    const statistics = await this.botDbService.getOrderStatistics();
+    return {
+      success: true,
+      data: statistics,
+    };
+  }
+
+  /**
+   * Get statistics for a specific bot's orders
+   * @param botId The ID of the bot
+   */
+  @Get('{botId}/statistics')
+  @SuccessResponse('200', 'Bot order statistics')
+  public async getBotStatistics(@Path() botId: string): Promise<ApiResponse<OrderStatistics>> {
+    const statistics = await this.botDbService.getBotOrderStatistics(botId);
+    return {
+      success: true,
+      data: statistics,
+    };
+  }
+
+  /**
    * Add a Binance order to the bot's orders
    * @param botId The ID of the bot
    * @param request The order request containing orderId and symbol
@@ -118,5 +146,35 @@ export class BinanceBotController extends Controller {
       success: true,
       data: { ...order, botId },
     };
+  }
+
+  /**
+   * Cleanup all data related to a testnet bot
+   * @param botId The ID of the bot to cleanup
+   */
+  @Delete('cleanup/testnet/{botId}')
+  @SuccessResponse('200', 'Testnet bot data cleaned up')
+  public async cleanupTestnetBot(@Path() botId: string): Promise<
+    ApiResponse<{
+      ordersDeleted: number;
+      testnetOrdersDeleted: number;
+      filledOrdersQueueDeleted: number;
+      testnetFilledOrdersQueueDeleted: number;
+      botDeleted: boolean;
+    }>
+  > {
+    try {
+      const result = await this.botDbService.cleanupTestnetBot(botId);
+      return {
+        success: true,
+        data: result,
+      };
+    } catch (error) {
+      this.setStatus(400);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
   }
 }

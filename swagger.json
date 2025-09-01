@@ -126,6 +126,145 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"TradingPair": {
+				"properties": {
+					"buyPrice": {
+						"type": "number",
+						"format": "double"
+					},
+					"sellPrice": {
+						"type": "number",
+						"format": "double"
+					},
+					"quantity": {
+						"type": "number",
+						"format": "double"
+					},
+					"buyOrderId": {
+						"type": "number",
+						"format": "double"
+					},
+					"sellOrderId": {
+						"type": "number",
+						"format": "double"
+					},
+					"id": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"buyPrice",
+					"sellPrice",
+					"quantity",
+					"id"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ApiResponse_TradingPair-Array_": {
+				"description": "Base response interface for all API responses",
+				"properties": {
+					"success": {
+						"type": "boolean",
+						"description": "Indicates if the operation was successful"
+					},
+					"error": {
+						"type": "string",
+						"description": "Optional error message in case of failure"
+					},
+					"data": {
+						"items": {
+							"$ref": "#/components/schemas/TradingPair"
+						},
+						"type": "array",
+						"description": "Optional data payload in case of success"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"NewTradingPair": {
+				"properties": {
+					"buyPrice": {
+						"type": "number",
+						"format": "double"
+					},
+					"sellPrice": {
+						"type": "number",
+						"format": "double"
+					},
+					"quantity": {
+						"type": "number",
+						"format": "double"
+					},
+					"buyOrderId": {
+						"type": "number",
+						"format": "double"
+					},
+					"sellOrderId": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"buyPrice",
+					"sellPrice",
+					"quantity"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ApiResponse_TradingPair_": {
+				"description": "Base response interface for all API responses",
+				"properties": {
+					"success": {
+						"type": "boolean",
+						"description": "Indicates if the operation was successful"
+					},
+					"error": {
+						"type": "string",
+						"description": "Optional error message in case of failure"
+					},
+					"data": {
+						"$ref": "#/components/schemas/TradingPair",
+						"description": "Optional data payload in case of success"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"Partial_NewTradingPair_": {
+				"properties": {
+					"buyPrice": {
+						"type": "number",
+						"format": "double"
+					},
+					"sellPrice": {
+						"type": "number",
+						"format": "double"
+					},
+					"quantity": {
+						"type": "number",
+						"format": "double"
+					},
+					"buyOrderId": {
+						"type": "number",
+						"format": "double"
+					},
+					"sellOrderId": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"type": "object",
+				"description": "Make all properties in T optional"
+			},
 			"ApiResponse_unknown_": {
 				"description": "Base response interface for all API responses",
 				"properties": {
@@ -521,6 +660,57 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"SymbolInfo": {
+				"properties": {
+					"baseAsset": {
+						"type": "string"
+					},
+					"quoteAsset": {
+						"type": "string"
+					},
+					"stepSize": {
+						"type": "string"
+					},
+					"tickSize": {
+						"type": "string"
+					},
+					"minNotional": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"baseAsset",
+					"quoteAsset",
+					"stepSize",
+					"tickSize",
+					"minNotional"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ApiResponse_SymbolInfo_": {
+				"description": "Base response interface for all API responses",
+				"properties": {
+					"success": {
+						"type": "boolean",
+						"description": "Indicates if the operation was successful"
+					},
+					"error": {
+						"type": "string",
+						"description": "Optional error message in case of failure"
+					},
+					"data": {
+						"$ref": "#/components/schemas/SymbolInfo",
+						"description": "Optional data payload in case of success"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"BinanceBotOrder": {
 				"properties": {
 					"symbol": {
@@ -703,6 +893,61 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"OrderStatistics": {
+				"properties": {
+					"buyOrdersCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"sellOrdersCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"totalBuyAmount": {
+						"type": "number",
+						"format": "double"
+					},
+					"totalSellAmount": {
+						"type": "number",
+						"format": "double"
+					},
+					"profitLoss": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"buyOrdersCount",
+					"sellOrdersCount",
+					"totalBuyAmount",
+					"totalSellAmount",
+					"profitLoss"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ApiResponse_OrderStatistics_": {
+				"description": "Base response interface for all API responses",
+				"properties": {
+					"success": {
+						"type": "boolean",
+						"description": "Indicates if the operation was successful"
+					},
+					"error": {
+						"type": "string",
+						"description": "Optional error message in case of failure"
+					},
+					"data": {
+						"$ref": "#/components/schemas/OrderStatistics",
+						"description": "Optional data payload in case of success"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"ApiResponse_BinanceBotOrder_": {
 				"description": "Base response interface for all API responses",
 				"properties": {
@@ -716,6 +961,56 @@
 					},
 					"data": {
 						"$ref": "#/components/schemas/BinanceBotOrder",
+						"description": "Optional data payload in case of success"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ApiResponse__ordersDeleted-number--testnetOrdersDeleted-number--filledOrdersQueueDeleted-number--testnetFilledOrdersQueueDeleted-number--botDeleted-boolean__": {
+				"description": "Base response interface for all API responses",
+				"properties": {
+					"success": {
+						"type": "boolean",
+						"description": "Indicates if the operation was successful"
+					},
+					"error": {
+						"type": "string",
+						"description": "Optional error message in case of failure"
+					},
+					"data": {
+						"properties": {
+							"botDeleted": {
+								"type": "boolean"
+							},
+							"testnetFilledOrdersQueueDeleted": {
+								"type": "number",
+								"format": "double"
+							},
+							"filledOrdersQueueDeleted": {
+								"type": "number",
+								"format": "double"
+							},
+							"testnetOrdersDeleted": {
+								"type": "number",
+								"format": "double"
+							},
+							"ordersDeleted": {
+								"type": "number",
+								"format": "double"
+							}
+						},
+						"required": [
+							"botDeleted",
+							"testnetFilledOrdersQueueDeleted",
+							"filledOrdersQueueDeleted",
+							"testnetOrdersDeleted",
+							"ordersDeleted"
+						],
+						"type": "object",
 						"description": "Optional data payload in case of success"
 					}
 				},
@@ -934,6 +1229,130 @@
 						}
 					}
 				]
+			}
+		},
+		"/trading-pairs": {
+			"get": {
+				"operationId": "GetAllTradingPairs",
+				"responses": {
+					"200": {
+						"description": "Trading pairs retrieved successfully",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_TradingPair-Array_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Get all trading pairs",
+				"tags": [
+					"Trading Pairs"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "Bot ID to filter trading pairs",
+						"in": "query",
+						"name": "botId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			},
+			"post": {
+				"operationId": "CreateTradingPairs",
+				"responses": {
+					"201": {
+						"description": "Trading pairs created successfully",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_TradingPair-Array_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Create multiple trading pairs",
+				"tags": [
+					"Trading Pairs"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "Bot ID for the trading pairs",
+						"in": "query",
+						"name": "botId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"description": "Array of trading pairs to create (without id)",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"items": {
+									"$ref": "#/components/schemas/NewTradingPair"
+								},
+								"type": "array",
+								"description": "Array of trading pairs to create (without id)"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/trading-pairs/{id}": {
+			"put": {
+				"operationId": "UpdateTradingPair",
+				"responses": {
+					"200": {
+						"description": "Trading pair updated successfully",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_TradingPair_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Update a trading pair by ID",
+				"tags": [
+					"Trading Pairs"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "Trading pair ID",
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"description": "Partial trading pair data to update",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/Partial_NewTradingPair_",
+								"description": "Partial trading pair data to update"
+							}
+						}
+					}
+				}
 			}
 		},
 		"/order": {
@@ -1197,7 +1616,7 @@
 				}
 			}
 		},
-		"/exchange/trader-tickers": {
+		"/exchange/{exchange}/trader-tickers": {
 			"get": {
 				"operationId": "GetTraderTickers",
 				"responses": {
@@ -1220,7 +1639,7 @@
 				"parameters": [
 					{
 						"description": "The exchange to get tickers from",
-						"in": "query",
+						"in": "path",
 						"name": "exchange",
 						"required": true,
 						"schema": {
@@ -1230,7 +1649,7 @@
 				]
 			}
 		},
-		"/exchange/products": {
+		"/exchange/{exchange}/products": {
 			"get": {
 				"operationId": "GetProducts",
 				"responses": {
@@ -1253,7 +1672,49 @@
 				"parameters": [
 					{
 						"description": "The exchange to get products from",
-						"in": "query",
+						"in": "path",
+						"name": "exchange",
+						"required": true,
+						"schema": {
+							"$ref": "#/components/schemas/ExchangeType"
+						}
+					}
+				]
+			}
+		},
+		"/exchange/{exchange}/symbol/{symbol}": {
+			"get": {
+				"operationId": "GetSymbolInfo",
+				"responses": {
+					"200": {
+						"description": "Symbol information retrieved successfully",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_SymbolInfo_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Get symbol information from a specific exchange",
+				"tags": [
+					"Exchange"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The trading pair symbol",
+						"in": "path",
+						"name": "symbol",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "The exchange to get symbol info from",
+						"in": "path",
 						"name": "exchange",
 						"required": true,
 						"schema": {
@@ -1478,6 +1939,62 @@
 				"parameters": []
 			}
 		},
+		"/binance-bot/statistics/all": {
+			"get": {
+				"operationId": "GetOrderStatistics",
+				"responses": {
+					"200": {
+						"description": "Order statistics",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_OrderStatistics_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Get statistics for all orders",
+				"tags": [
+					"Binance Bot"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/binance-bot/{botId}/statistics": {
+			"get": {
+				"operationId": "GetBotStatistics",
+				"responses": {
+					"200": {
+						"description": "Bot order statistics",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_OrderStatistics_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Get statistics for a specific bot's orders",
+				"tags": [
+					"Binance Bot"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The ID of the bot",
+						"in": "path",
+						"name": "botId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
 		"/binance-bot/{botId}/filled-order": {
 			"post": {
 				"operationId": "AddBotFilledOrder",
@@ -1534,6 +2051,39 @@
 						}
 					}
 				}
+			}
+		},
+		"/binance-bot/cleanup/testnet/{botId}": {
+			"delete": {
+				"operationId": "CleanupTestnetBot",
+				"responses": {
+					"200": {
+						"description": "Testnet bot data cleaned up",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse__ordersDeleted-number--testnetOrdersDeleted-number--filledOrdersQueueDeleted-number--testnetFilledOrdersQueueDeleted-number--botDeleted-boolean__"
+								}
+							}
+						}
+					}
+				},
+				"description": "Cleanup all data related to a testnet bot",
+				"tags": [
+					"Binance Bot"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The ID of the bot to cleanup",
+						"in": "path",
+						"name": "botId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
 			}
 		},
 		"/admin/migrate-symbol": {

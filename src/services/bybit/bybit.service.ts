@@ -199,7 +199,7 @@ export class BybitService implements ExchangeService {
     }
   }
 
-  private async getExchangeInfo(symbol: string): Promise<SymbolInfo> {
+  public async getExchangeInfo(symbol: string): Promise<SymbolInfo> {
     try {
       if (this.symbolInfoCache.has(symbol)) {
         return this.symbolInfoCache.get(symbol)!;
