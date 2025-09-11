@@ -140,6 +140,9 @@
 						"type": "number",
 						"format": "double"
 					},
+					"buyFilled": {
+						"type": "boolean"
+					},
 					"buyOrderId": {
 						"type": "number",
 						"format": "double"
@@ -156,6 +159,7 @@
 					"buyPrice",
 					"sellPrice",
 					"quantity",
+					"buyFilled",
 					"id"
 				],
 				"type": "object",
@@ -200,6 +204,9 @@
 						"type": "number",
 						"format": "double"
 					},
+					"buyFilled": {
+						"type": "boolean"
+					},
 					"buyOrderId": {
 						"type": "number",
 						"format": "double"
@@ -212,7 +219,8 @@
 				"required": [
 					"buyPrice",
 					"sellPrice",
-					"quantity"
+					"quantity",
+					"buyFilled"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -238,32 +246,6 @@
 				],
 				"type": "object",
 				"additionalProperties": false
-			},
-			"Partial_NewTradingPair_": {
-				"properties": {
-					"buyPrice": {
-						"type": "number",
-						"format": "double"
-					},
-					"sellPrice": {
-						"type": "number",
-						"format": "double"
-					},
-					"quantity": {
-						"type": "number",
-						"format": "double"
-					},
-					"buyOrderId": {
-						"type": "number",
-						"format": "double"
-					},
-					"sellOrderId": {
-						"type": "number",
-						"format": "double"
-					}
-				},
-				"type": "object",
-				"description": "Make all properties in T optional"
 			},
 			"ApiResponse_unknown_": {
 				"description": "Base response interface for all API responses",
@@ -1253,7 +1235,7 @@
 				"security": [],
 				"parameters": [
 					{
-						"description": "Bot ID to filter trading pairs",
+						"description": "Optional bot ID to filter trading pairs",
 						"in": "query",
 						"name": "botId",
 						"required": true,
@@ -1347,7 +1329,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/Partial_NewTradingPair_",
+								"$ref": "#/components/schemas/TradingPair",
 								"description": "Partial trading pair data to update"
 							}
 						}

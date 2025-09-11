@@ -77,13 +77,15 @@ export class TradingPairDbService {
     }
   }
 
-  public async updateTradingPair(id: string, data: Partial<TradingPairDb>): Promise<TradingPair> {
+  public async updateTradingPair(id: string, data: TradingPair): Promise<TradingPair> {
     try {
       const collection = await this.mongoDbService.getCollection<TradingPairDb>(this.getCollectionName('pairs'));
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { id: _, ...updated } = data;
 
       const result = await collection.findOneAndUpdate(
         { _id: new ObjectId(id) },
-        { $set: data },
+        { $set: updated },
         { returnDocument: 'after' }
       );
 

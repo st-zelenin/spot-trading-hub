@@ -12,13 +12,13 @@ export class TradingPairController extends Controller {
 
   /**
    * Get all trading pairs
-   * @param botId Bot ID to filter trading pairs
+   * @param botId Optional bot ID to filter trading pairs
    * @returns Array of trading pairs
    */
   @Get()
   @SuccessResponse('200', 'Trading pairs retrieved successfully')
   public async getAllTradingPairs(@Query() botId: string): Promise<ApiResponse<TradingPair[]>> {
-    logger.info(`Fetching trading pairs${botId}`);
+    logger.info(`Fetching trading pairs${botId ? ` for bot ${botId}` : ''}`);
 
     const pairs = await this.tradingPairDbService.getTradingPairs(botId);
 
@@ -63,10 +63,7 @@ export class TradingPairController extends Controller {
    */
   @Put('{id}')
   @SuccessResponse('200', 'Trading pair updated successfully')
-  public async updateTradingPair(
-    @Path() id: string,
-    @Body() data: Partial<NewTradingPair>
-  ): Promise<ApiResponse<TradingPair>> {
+  public async updateTradingPair(@Path() id: string, @Body() data: TradingPair): Promise<ApiResponse<TradingPair>> {
     logger.info(`Updating trading pair ${id}`);
 
     const updatedPair = await this.tradingPairDbService.updateTradingPair(id, data);

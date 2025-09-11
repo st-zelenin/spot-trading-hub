@@ -16,7 +16,18 @@ export const startBinanceWssServer = (port: number): void => {
 
   const clients = new Map<string, { symbol: string; ws: WebSocket }>();
   const binance = ExchangeFactory.getExchangeService(ExchangeType.BINANCE) as BinanceService;
-  const traidingPairs = ['ZKUSDC', 'STRKUSDC', 'PYTHUSDC', 'ZROUSDC', 'APTUSDC', 'WUSDC', 'REDUSDC'];
+  const traidingPairs = [
+    'ZKUSDC',
+    'STRKUSDC',
+    'PYTHUSDC',
+    'ZROUSDC',
+    'APTUSDC',
+    'WUSDC',
+    'REDUSDC',
+    'BTCUSDC',
+    'ETHUSDC',
+    'LINEAUSDC',
+  ];
   const botDbService = new BotDbService(mongoDbService);
 
   const limiter = new Bottleneck({

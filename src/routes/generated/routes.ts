@@ -77,6 +77,7 @@ const models: TsoaRoute.Models = {
             "buyPrice": {"dataType":"double","required":true},
             "sellPrice": {"dataType":"double","required":true},
             "quantity": {"dataType":"double","required":true},
+            "buyFilled": {"dataType":"boolean","required":true},
             "buyOrderId": {"dataType":"double"},
             "sellOrderId": {"dataType":"double"},
             "id": {"dataType":"string","required":true},
@@ -100,6 +101,7 @@ const models: TsoaRoute.Models = {
             "buyPrice": {"dataType":"double","required":true},
             "sellPrice": {"dataType":"double","required":true},
             "quantity": {"dataType":"double","required":true},
+            "buyFilled": {"dataType":"boolean","required":true},
             "buyOrderId": {"dataType":"double"},
             "sellOrderId": {"dataType":"double"},
         },
@@ -114,11 +116,6 @@ const models: TsoaRoute.Models = {
             "data": {"ref":"TradingPair"},
         },
         "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "Partial_NewTradingPair_": {
-        "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"buyPrice":{"dataType":"double"},"sellPrice":{"dataType":"double"},"quantity":{"dataType":"double"},"buyOrderId":{"dataType":"double"},"sellOrderId":{"dataType":"double"}},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "ApiResponse_unknown_": {
@@ -648,7 +645,7 @@ export function RegisterRoutes(app: Router) {
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsTradingPairController_updateTradingPair: Record<string, TsoaRoute.ParameterSchema> = {
                 id: {"in":"path","name":"id","required":true,"dataType":"string"},
-                data: {"in":"body","name":"data","required":true,"ref":"Partial_NewTradingPair_"},
+                data: {"in":"body","name":"data","required":true,"ref":"TradingPair"},
         };
         app.put('/trading-pairs/:id',
             ...(fetchMiddlewares<RequestHandler>(TradingPairController)),
