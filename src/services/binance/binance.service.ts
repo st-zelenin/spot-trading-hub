@@ -8,6 +8,7 @@ import { Product } from '../../models/product';
 import Decimal from 'decimal.js';
 import { BaseApiError, ExchangeError, ValidationError } from '../../models/errors';
 import { Trader } from '../../models/dto/user-dto';
+import Bottleneck from 'bottleneck';
 
 /**
  * Binance exchange service implementation
@@ -16,8 +17,33 @@ import { Trader } from '../../models/dto/user-dto';
 export class BinanceService implements ExchangeService {
   private readonly client: Spot;
   private readonly symbolInfoCache: Map<string, SymbolInfo> = new Map();
+  private readonly limiter: Bottleneck;
 
   constructor() {
+    // Initialize rate limiter for Binance API
+    // Binance has a weight-based rate limit system
+    // Default settings: 1200 weight per minute = 20 requests per second
+    this.limiter = new Bottleneck({
+      maxConcurrent: 10, // Maximum number of requests running at the same time
+      minTime: 50, // Minimum time between requests (in ms)
+      reservoir: 1200, // Initial number of requests that can be made
+      reservoirRefreshAmount: 1200, // Number of requests that will be added to the reservoir
+      reservoirRefreshInterval: 60 * 1000, // How often the reservoir will be refreshed (1 minute)
+    });
+
+    // Add retry mechanism for failed requests
+    this.limiter.on('failed', (error, jobInfo) => {
+      const maxRetries = 3;
+      if (jobInfo.retryCount < maxRetries) {
+        // Exponential backoff: 1000ms, 2000ms, 4000ms
+        const retryDelay = 1000 * Math.pow(2, jobInfo.retryCount);
+        logger.warn(`Retrying failed request (${jobInfo.retryCount + 1}/${maxRetries}):`, { error });
+        return retryDelay;
+      }
+      logger.error(`Request failed after ${maxRetries} retries: `, { error });
+      return null; // Stop retrying
+    });
+
     if (env.TESTNET) {
       this.client = new Spot({
         configurationRestAPI: {
@@ -45,7 +71,7 @@ export class BinanceService implements ExchangeService {
     try {
       logger.info(`Fetching recent filled ${symbol} orders from Binance`);
 
-      const response = await this.client.restAPI.allOrders({ symbol });
+      const response = await this.executeWithRateLimit(() => this.client.restAPI.allOrders({ symbol }));
 
       const orders = await response.data();
       logger.info(`Fetched ${orders.length} recent filled orders from Binance`);
@@ -60,10 +86,12 @@ export class BinanceService implements ExchangeService {
     try {
       logger.info(`Fetching order ${orderId} for symbol ${symbol} from Binance`);
 
-      const response = await this.client.restAPI.getOrder({
-        symbol,
-        orderId: parseInt(orderId, 10),
-      });
+      const response = await this.executeWithRateLimit(() =>
+        this.client.restAPI.getOrder({
+          symbol,
+          orderId: parseInt(orderId, 10),
+        })
+      );
 
       const order = await response.data();
       logger.info(`Fetched order ${orderId} for symbol ${symbol} from Binance`);
@@ -78,10 +106,12 @@ export class BinanceService implements ExchangeService {
     try {
       logger.info(`Cancelling order ${orderId} for symbol ${symbol} on Binance`);
 
-      const cancelOrderResponse = await this.client.restAPI.deleteOrder({
-        symbol,
-        orderId: parseInt(orderId, 10),
-      });
+      const cancelOrderResponse = await this.executeWithRateLimit(() =>
+        this.client.restAPI.deleteOrder({
+          symbol,
+          orderId: parseInt(orderId, 10),
+        })
+      );
 
       logger.info(
         `Order ${orderId} for symbol ${symbol} cancelled successfully with status ${cancelOrderResponse.status}`
@@ -95,7 +125,9 @@ export class BinanceService implements ExchangeService {
     try {
       logger.info(`Cancelling all orders for symbol ${symbol} on Binance`);
 
-      const cancelOrderResponse = await this.client.restAPI.deleteOpenOrders({ symbol });
+      const cancelOrderResponse = await this.executeWithRateLimit(() =>
+        this.client.restAPI.deleteOpenOrders({ symbol })
+      );
 
       logger.info(`All orders for symbol ${symbol} cancelled successfully with status ${cancelOrderResponse.status}`);
     } catch (error) {
@@ -131,7 +163,7 @@ export class BinanceService implements ExchangeService {
         price: this.formatPriceWithPrecision(limitPrice, symbolInfo.tickSize),
       };
 
-      const response = await this.client.restAPI.newOrder(orderOptions);
+      const response = await this.executeWithRateLimit(() => this.client.restAPI.newOrder(orderOptions));
       const order = await response.data();
 
       if (!order.orderId) {
@@ -148,7 +180,7 @@ export class BinanceService implements ExchangeService {
 
   public async getSymbolsPrice(symbols: string[]): Promise<{ symbol: string; price: string }[]> {
     try {
-      const response = await this.client.restAPI.tickerPrice({ symbols });
+      const response = await this.executeWithRateLimit(() => this.client.restAPI.tickerPrice({ symbols }));
       const data = await response.data();
       const prices = data as { symbol: string; price: string }[];
 
@@ -160,7 +192,7 @@ export class BinanceService implements ExchangeService {
 
   public async getOpenOrders(symbols: string[]): Promise<SpotRestAPI.GetOpenOrdersResponse> {
     try {
-      const response = await this.client.restAPI.getOpenOrders();
+      const response = await this.executeWithRateLimit(() => this.client.restAPI.getOpenOrders());
       const data = await response.data();
       return data.filter((order) => symbols.includes(order.symbol!));
     } catch (error) {
@@ -170,7 +202,7 @@ export class BinanceService implements ExchangeService {
 
   public async getAllOpenOrders(): Promise<SpotRestAPI.GetOpenOrdersResponse> {
     try {
-      const response = await this.client.restAPI.getOpenOrders();
+      const response = await this.executeWithRateLimit(() => this.client.restAPI.getOpenOrders());
       const data = await response.data();
       return data;
     } catch (error) {
@@ -184,7 +216,7 @@ export class BinanceService implements ExchangeService {
         return this.symbolInfoCache.get(symbol)!;
       }
 
-      const response = await this.client.restAPI.exchangeInfo({ symbol });
+      const response = await this.executeWithRateLimit(() => this.client.restAPI.exchangeInfo({ symbol }));
       const exchangeInfo = await response.data();
 
       if (!exchangeInfo.symbols?.length) {
@@ -317,9 +349,11 @@ export class BinanceService implements ExchangeService {
       // const t = await this.client.restAPI.ticker({ symbol: 'CYBERUSDC' });
       // logger.info('t', t);
 
-      const response = await this.client.restAPI.ticker({
-        symbols: symbols.filter((s) => !notSupportedSymbols.includes(s)),
-      });
+      const response = await this.executeWithRateLimit(() =>
+        this.client.restAPI.ticker({
+          symbols: symbols.filter((s) => !notSupportedSymbols.includes(s)),
+        })
+      );
       const tickerData = await response.data();
 
       const tickers = Array.isArray(tickerData) ? tickerData : [tickerData];
@@ -344,7 +378,7 @@ export class BinanceService implements ExchangeService {
     try {
       logger.info('Fetching products from Binance');
 
-      const response = await this.client.restAPI.exchangeInfo();
+      const response = await this.executeWithRateLimit(() => this.client.restAPI.exchangeInfo());
       const exchangeInfo = await response.data();
 
       if (!exchangeInfo.symbols) {
@@ -368,6 +402,69 @@ export class BinanceService implements ExchangeService {
     } catch (error) {
       throw this.getExchangeError('Failed to fetch products', error);
     }
+  }
+
+  public async getOrderHistory(symbol: string, startTime: number, endTime: number): Promise<unknown[]> {
+    try {
+      logger.info(`Fetching complete order history for ${symbol}`);
+
+      // Default to maximum allowed limit
+      const limit = 1000;
+
+      // Create request parameters
+      const params: SpotRestAPI.AllOrdersRequest = {
+        symbol,
+        limit,
+        startTime,
+        endTime,
+      };
+
+      // Use rate limiter for API call
+      const response = await this.executeWithRateLimit(() => this.client.restAPI.allOrders(params));
+      const orders = await response.data();
+
+      logger.info(`Fetched ${orders.length} orders for ${symbol}`);
+      return orders;
+    } catch (error) {
+      throw this.getExchangeError('Failed to fetch complete order history', error);
+    }
+  }
+
+  /**
+   * Gets user trades for a specific symbol
+   * @param symbol The symbol to get trades for
+   * @param limit The maximum number of trades to return
+   * @returns A promise that resolves to the user's trades
+   */
+  public async getUserTrades(symbol: string, limit = 100): Promise<unknown> {
+    try {
+      logger.info(`Fetching user trades for symbol ${symbol} from Binance`);
+
+      const response = await this.executeWithRateLimit(() =>
+        this.client.restAPI.myTrades({
+          symbol,
+          limit,
+        })
+      );
+
+      const trades = await response.data();
+      logger.info(`Successfully fetched ${trades.length} user trades for symbol ${symbol}`);
+
+      return trades;
+    } catch (error) {
+      throw this.getExchangeError(`Failed to fetch user trades for ${symbol}`, error);
+    }
+  }
+
+  /**
+   * Wraps API calls with the rate limiter and retry mechanism
+   * @param fn The function to execute with rate limiting
+   * @returns The result of the function
+   */
+  private async executeWithRateLimit<T>(fn: () => Promise<T>): Promise<T> {
+    return this.limiter.schedule(() => fn());
+    // Errors will be handled by the 'failed' event handler for retries
+    // If all retries fail, the error will be propagated automatically
   }
 
   private getExchangeError(baseMessage: string, error: unknown): ExchangeError {

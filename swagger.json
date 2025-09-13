@@ -423,6 +423,33 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"TradeHistoryRequestDto": {
+				"description": "Request parameters for getting user trades",
+				"properties": {
+					"exchange": {
+						"$ref": "#/components/schemas/ExchangeType",
+						"description": "The exchange to get trades from",
+						"example": "BINANCE"
+					},
+					"symbol": {
+						"type": "string",
+						"description": "The trading pair symbol",
+						"example": "BTCUSDT"
+					},
+					"limit": {
+						"type": "number",
+						"format": "double",
+						"description": "The maximum number of trades to return",
+						"example": 100
+					}
+				},
+				"required": [
+					"exchange",
+					"symbol"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"TradeHistory": {
 				"description": "Unified trade history model for all exchanges",
 				"properties": {
@@ -521,6 +548,27 @@
 			},
 			"UpdateRecentHistoryRequest": {
 				"description": "Request parameters for updating recent history",
+				"properties": {
+					"exchange": {
+						"$ref": "#/components/schemas/ExchangeType",
+						"description": "The exchange to get trade history from",
+						"example": "BINANCE"
+					},
+					"symbol": {
+						"type": "string",
+						"description": "The trading pair symbol",
+						"example": "BTCUSDT"
+					}
+				},
+				"required": [
+					"exchange",
+					"symbol"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SyncFullHistoryRequest": {
+				"description": "Request parameters for syncing full history",
 				"properties": {
 					"exchange": {
 						"$ref": "#/components/schemas/ExchangeType",
@@ -1523,6 +1571,41 @@
 				]
 			}
 		},
+		"/history/user-trades": {
+			"post": {
+				"operationId": "GetUserTrades",
+				"responses": {
+					"200": {
+						"description": "User trades retrieved",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_unknown_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Get user trades for a specific symbol",
+				"tags": [
+					"Trade History"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"description": "The trade history request parameters",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/TradeHistoryRequestDto",
+								"description": "The trade history request parameters"
+							}
+						}
+					}
+				}
+			}
+		},
 		"/history/history": {
 			"get": {
 				"operationId": "GetTradeHistory",
@@ -1592,6 +1675,39 @@
 						"application/json": {
 							"schema": {
 								"$ref": "#/components/schemas/UpdateRecentHistoryRequest"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/history/sync-full": {
+			"post": {
+				"operationId": "SyncFullHistory",
+				"responses": {
+					"200": {
+						"description": "Full order history",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_unknown_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Sync full order history for a specific symbol from the exchange",
+				"tags": [
+					"Trade History"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SyncFullHistoryRequest"
 							}
 						}
 					}

@@ -188,6 +188,16 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TradeHistoryRequestDto": {
+        "dataType": "refObject",
+        "properties": {
+            "exchange": {"ref":"ExchangeType","required":true},
+            "symbol": {"dataType":"string","required":true},
+            "limit": {"dataType":"double"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "TradeHistory": {
         "dataType": "refObject",
         "properties": {
@@ -218,6 +228,15 @@ const models: TsoaRoute.Models = {
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "UpdateRecentHistoryRequest": {
+        "dataType": "refObject",
+        "properties": {
+            "exchange": {"ref":"ExchangeType","required":true},
+            "symbol": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SyncFullHistoryRequest": {
         "dataType": "refObject",
         "properties": {
             "exchange": {"ref":"ExchangeType","required":true},
@@ -826,6 +845,36 @@ export function RegisterRoutes(app: Router) {
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsTradeHistoryController_getUserTrades: Record<string, TsoaRoute.ParameterSchema> = {
+                requestBody: {"in":"body","name":"requestBody","required":true,"ref":"TradeHistoryRequestDto"},
+        };
+        app.post('/history/user-trades',
+            ...(fetchMiddlewares<RequestHandler>(TradeHistoryController)),
+            ...(fetchMiddlewares<RequestHandler>(TradeHistoryController.prototype.getUserTrades)),
+
+            async function TradeHistoryController_getUserTrades(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsTradeHistoryController_getUserTrades, request, response });
+
+                const controller = new TradeHistoryController();
+
+              await templateService.apiHandler({
+                methodName: 'getUserTrades',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsTradeHistoryController_getTradeHistory: Record<string, TsoaRoute.ParameterSchema> = {
                 exchange: {"in":"query","name":"exchange","required":true,"ref":"ExchangeType"},
                 symbol: {"in":"query","name":"symbol","required":true,"dataType":"string"},
@@ -876,6 +925,36 @@ export function RegisterRoutes(app: Router) {
 
               await templateService.apiHandler({
                 methodName: 'updateRecentHistory',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsTradeHistoryController_syncFullHistory: Record<string, TsoaRoute.ParameterSchema> = {
+                requestBody: {"in":"body","name":"requestBody","required":true,"ref":"SyncFullHistoryRequest"},
+        };
+        app.post('/history/sync-full',
+            ...(fetchMiddlewares<RequestHandler>(TradeHistoryController)),
+            ...(fetchMiddlewares<RequestHandler>(TradeHistoryController.prototype.syncFullHistory)),
+
+            async function TradeHistoryController_syncFullHistory(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsTradeHistoryController_syncFullHistory, request, response });
+
+                const controller = new TradeHistoryController();
+
+              await templateService.apiHandler({
+                methodName: 'syncFullHistory',
                 controller,
                 response,
                 next,

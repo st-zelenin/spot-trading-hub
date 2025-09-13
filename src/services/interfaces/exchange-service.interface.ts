@@ -8,6 +8,7 @@ import { Product } from '../../models/product';
 import { SymbolInfo } from '../../models/exchange';
 
 export interface ExchangeService {
+  getOrderHistory(symbol: string, startTime: number, chunkEndTime: number): Promise<unknown[]>;
   /**
    * Cancels an order on the exchange
    * @param orderId The ID of the order to cancel
@@ -58,6 +59,14 @@ export interface ExchangeService {
    * @returns A promise that resolves to symbol information
    */
   getExchangeInfo(symbol: string): Promise<SymbolInfo>;
+
+  /**
+   * Gets user trades for a specific symbol
+   * @param symbol The symbol to get trades for
+   * @param limit The maximum number of trades to return
+   * @returns A promise that resolves to the user's trades
+   */
+  getUserTrades(symbol: string, limit?: number): Promise<unknown>;
 
   // Additional methods will be added later for other CRUD operations
   // createOrder(order: Partial<Order>): Promise<OrderResponse>;

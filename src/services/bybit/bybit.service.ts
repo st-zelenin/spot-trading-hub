@@ -25,6 +25,11 @@ export class BybitService implements ExchangeService {
     logger.info('Bybit service initialized');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public getOrderHistory(_symbol: string, _startTime: number, _chunkEndTime: number): Promise<unknown[]> {
+    throw new Error('Method not implemented.');
+  }
+
   public async getSymbolRecentFilledOrders(symbol: string): Promise<AccountOrderV5[]> {
     try {
       logger.info(`Fetching recent filled ${symbol} orders from Bybit`);
@@ -357,6 +362,33 @@ export class BybitService implements ExchangeService {
         }));
     } catch (error) {
       throw this.getExchangeError('Failed to fetch products', error);
+    }
+  }
+
+  /**
+   * Gets user trades for a specific symbol
+   * @param symbol The symbol to get trades for
+   * @param limit The maximum number of trades to return
+   * @returns A promise that resolves to the user's trades
+   */
+  public async getUserTrades(symbol: string, limit = 100): Promise<unknown> {
+    try {
+      logger.info(`Fetching user trades for symbol ${symbol} from Bybit`);
+
+      const response = await this.client.getExecutionList({
+        category: 'spot',
+        symbol,
+        limit,
+      });
+
+      if (response.retCode !== 0) {
+        throw new Error(`Failed to fetch user trades: ${response.retMsg}`);
+      }
+
+      logger.info(`Successfully fetched ${response.result?.list?.length || 0} user trades for symbol ${symbol}`);
+      return response.result?.list || [];
+    } catch (error) {
+      throw this.getExchangeError(`Failed to fetch user trades for ${symbol}`, error);
     }
   }
 

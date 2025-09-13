@@ -2,15 +2,16 @@ import { ExchangeService } from '../interfaces/exchange-service.interface';
 import { HistorySyncService } from '../interfaces/history-sync-service.interface';
 import { logger } from '../../utils/logger';
 import { CosmosDbService } from '../interfaces/cosmos-db-service.interface';
+import { TradingService } from '../trading/trading.service';
 
 export class BybitHistorySyncService implements HistorySyncService {
   constructor(
     private readonly exchangeService: ExchangeService,
-    private readonly tradingDbService: CosmosDbService,
+    private readonly tradingService: TradingService,
     private readonly ordersDbService: CosmosDbService
   ) {
     console.log('exchangeService', this.exchangeService);
-    console.log('tradingDbService', this.tradingDbService);
+    console.log('tradingService', this.tradingService);
     console.log('ordersDbService', this.ordersDbService);
   }
 
@@ -26,7 +27,7 @@ export class BybitHistorySyncService implements HistorySyncService {
     throw new Error('Method not implemented.');
   }
 
-  public syncFullHistory(symbol: string): Promise<void> {
+  public syncFullHistory(symbol: string): Promise<unknown[]> {
     logger.info(`Sync full history for symbol ${symbol}`);
 
     throw new Error('Method not implemented.');
