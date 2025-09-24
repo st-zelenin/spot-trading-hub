@@ -80,11 +80,13 @@ export class TradeHistoryController extends Controller {
     logger.info(`Fetching recent filled orders for exchange: ${exchange}`);
 
     const exchangeService = ExchangeFactory.getExchangeService(exchange);
+    const tradeHistoryService = TradeHistoryFactory.getTradeHistoryService(exchange);
 
     const recentOrders = await exchangeService.getSymbolRecentFilledOrders(symbol);
-
-    // TODO: In the future, these orders will be saved to the database by tradeHistoryService
     logger.info(`Successfully fetched recent filled orders for ${exchange}`);
+
+    await tradeHistoryService.saveOrders(symbol, recentOrders);
+    logger.info(`Successfully fetched and saved recent filled orders for ${exchange}`);
 
     return {
       success: true,

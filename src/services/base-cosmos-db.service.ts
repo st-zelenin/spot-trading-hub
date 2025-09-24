@@ -1,4 +1,13 @@
-import { CosmosClient, Container, Database, SqlQuerySpec, JSONValue } from '@azure/cosmos';
+import {
+  CosmosClient,
+  Container,
+  Database,
+  SqlQuerySpec,
+  JSONValue,
+  ItemDefinition,
+  OperationInput,
+  BulkOperationType,
+} from '@azure/cosmos';
 import { env } from '../config/env';
 import { logger } from '../utils/logger';
 import { CosmosDbService } from './interfaces/cosmos-db-service.interface';
@@ -93,6 +102,70 @@ export class BaseCosmosDbService implements CosmosDbService {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error(`Failed to get container ${containerId}: ${errorMessage}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Upserts an item in a container
+   * @param containerId The ID of the container
+   * @param item The item to upsert
+   * @returns The upserted item
+   */
+  public async upsertItem<T extends ItemDefinition>(containerId: string, item: T): Promise<T> {
+    try {
+      const container = await this.getContainer(containerId);
+      const { resource } = await container.items.upsert<T>(item);
+      return resource!;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      logger.error(`Failed to upsert item in container ${containerId}: ${errorMessage}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Performs bulk upsert operations on multiple items in a container
+   * @param containerId The ID of the container
+   * @param items Array of items to upsert
+   * @returns Array of successfully upserted items
+   */
+  public async bulkUpsertItems<T extends ItemDefinition>(containerId: string, items: T[]): Promise<T[]> {
+    try {
+      if (!items.length) {
+        return [];
+      }
+
+      const container = await this.getContainer(containerId);
+
+      const operations = items.map<OperationInput>((item) => {
+        return {
+          operationType: BulkOperationType.Upsert,
+          id: item.id,
+          resourceBody: item,
+        };
+      });
+
+      // Execute bulk operations using the recommended method
+      const response = await container.items.executeBulkOperations(operations);
+
+      // Process results
+      const results: T[] = [];
+      for (const result of response) {
+        // Check if there's an error in the operation
+        if (result.error) {
+          logger.error(`Failed to upsert item in bulk operation: ${JSON.stringify(result.error)}`);
+        } else if (result.response) {
+          // For successful operations, the item is in response.resourceBody
+          results.push(result.response.resourceBody as T);
+        }
+      }
+
+      logger.info(`Bulk upserted ${results.length}/${items.length} items in container ${containerId}`);
+      return results;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      logger.error(`Failed to bulk upsert items in container ${containerId}: ${errorMessage}`);
       throw error;
     }
   }

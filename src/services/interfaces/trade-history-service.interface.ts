@@ -11,4 +11,12 @@ export interface TradeHistoryService {
    * @returns A promise that resolves to an array of TradeHistory objects
    */
   getTradeHistory(symbol: string): Promise<TradeHistory[]>;
+
+  /**
+   * Saves orders to the database
+   * @param symbol The trading pair symbol
+   * @param orders The orders to save
+   * @returns A promise that resolves to the saved orders
+   */
+  saveOrders(symbol: string, orders: unknown[]): Promise<unknown[]>;
 }
