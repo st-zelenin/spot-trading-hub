@@ -2,7 +2,7 @@ import { BaseCosmosDbService } from '../base-cosmos-db.service';
 
 export class TradingDbService extends BaseCosmosDbService {
   constructor() {
-    super('trading');
+    super('trading', 'id');
   }
 }
 

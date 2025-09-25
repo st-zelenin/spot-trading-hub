@@ -20,7 +20,10 @@ export class BaseCosmosDbService implements CosmosDbService {
   private database: Database | undefined;
   private containers: Map<string, Container> = new Map();
 
-  constructor(private readonly dbName: string) {
+  constructor(
+    private readonly dbName: string,
+    private readonly partitionKey: string
+  ) {
     this.client = new CosmosClient({
       connectionString: env.COSMOS_DB_CONNECTION_STRING,
       key: env.COSMOS_DB_KEY,
@@ -143,6 +146,7 @@ export class BaseCosmosDbService implements CosmosDbService {
           operationType: BulkOperationType.Upsert,
           id: item.id,
           resourceBody: item,
+          partitionKey: item[this.partitionKey] as string,
         };
       });
 

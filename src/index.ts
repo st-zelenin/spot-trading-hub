@@ -69,7 +69,7 @@ tradingDbService.initialize(CONTAINER_NAMES.Users).catch((error: unknown) => {
 
 // Start the server
 const PORT = env.PORT;
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   logger.info(`Server running on port ${PORT}`);
   logger.info(`Swagger documentation available at http://localhost:${PORT}/api-docs`);
 });

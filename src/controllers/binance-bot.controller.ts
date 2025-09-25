@@ -72,6 +72,24 @@ export class BinanceBotController extends Controller {
   }
 
   /**
+   * Update numPairs for a specific bot
+   * @param botId The ID of the bot
+   * @param numPairs The number of pairs
+   */
+  @Put('{botId}/num-pairs')
+  @SuccessResponse('200', 'Bot numPairs updated')
+  public async updateBotNumPairs(
+    @Path() botId: string,
+    @Body() body: { numPairs: number }
+  ): Promise<ApiResponse<null>> {
+    await this.botDbService.updateBot(botId, { config: { numPairs: body.numPairs } });
+    return {
+      success: true,
+      data: null,
+    };
+  }
+
+  /**
    * Create configuration for a specific bot
    * @param config The bot configuration
    */

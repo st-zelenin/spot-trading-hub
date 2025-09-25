@@ -34,6 +34,11 @@ export class BybitService implements ExchangeService {
     try {
       logger.info(`Fetching recent filled ${symbol} orders from Bybit`);
 
+      // // Calculate startTime for 20 days ago
+      // const twentyDaysAgo = new Date();
+      // twentyDaysAgo.setDate(twentyDaysAgo.getDate() - 20);
+      // const startTime = twentyDaysAgo.getTime();
+
       const response = await this.client.getHistoricOrders({
         category: 'spot',
         symbol,

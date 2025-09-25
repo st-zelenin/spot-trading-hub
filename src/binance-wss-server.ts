@@ -27,6 +27,10 @@ export const startBinanceWssServer = (port: number): void => {
     'BTCUSDC',
     'ETHUSDC',
     'LINEAUSDC',
+    'SOLUSDC',
+    'AVAXUSDC',
+    'NEARUSDC',
+    'LINKUSDC',
   ];
   const botDbService = new BotDbService(mongoDbService);
 

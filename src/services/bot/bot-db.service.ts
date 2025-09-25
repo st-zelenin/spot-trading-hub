@@ -45,7 +45,7 @@ export class BotDbService {
 
   public async getBot(id: string): Promise<Bot> {
     try {
-      const collection = await this.mongoDbService.getCollection<BaseBot>('bots');
+      const collection = await this.mongoDbService.getCollection<BaseBot>(this.getCollectionName('bots'));
       const bot = await collection.findOne({ _id: new ObjectId(id) });
 
       if (!bot) {
@@ -61,7 +61,7 @@ export class BotDbService {
 
   public async createBot(config: BotConfig): Promise<Bot> {
     try {
-      const collection = await this.mongoDbService.getCollection<BaseBot>('bots');
+      const collection = await this.mongoDbService.getCollection<BaseBot>(this.getCollectionName('bots'));
       const result = await collection.insertOne({ config, pairs: [] });
       const rawBot = await collection.findOne({ _id: result.insertedId });
 
@@ -86,7 +86,7 @@ export class BotDbService {
    */
   public async updateBot(id: string, data: Partial<BaseBot>): Promise<Bot> {
     try {
-      const collection = await this.mongoDbService.getCollection<BaseBot>('bots');
+      const collection = await this.mongoDbService.getCollection<BaseBot>(this.getCollectionName('bots'));
       const bot = await collection.findOne({ _id: new ObjectId(id) });
       if (!bot) {
         throw new NotFoundError(`Bot ${id} not found`);
@@ -130,7 +130,7 @@ export class BotDbService {
 
   public async getAllBots(): Promise<Bot[]> {
     try {
-      const collection = await this.mongoDbService.getCollection<BaseBot>('bots');
+      const collection = await this.mongoDbService.getCollection<BaseBot>(this.getCollectionName('bots'));
       const bots = await collection.find().toArray();
 
       logger.info(`Retrieved ${bots.length} bots`);

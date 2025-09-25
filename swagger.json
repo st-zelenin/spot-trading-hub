@@ -1981,6 +1981,58 @@
 				}
 			}
 		},
+		"/binance-bot/{botId}/num-pairs": {
+			"put": {
+				"operationId": "UpdateBotNumPairs",
+				"responses": {
+					"200": {
+						"description": "Bot numPairs updated",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_null_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Update numPairs for a specific bot",
+				"tags": [
+					"Binance Bot"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The ID of the bot",
+						"in": "path",
+						"name": "botId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"numPairs": {
+										"type": "number",
+										"format": "double"
+									}
+								},
+								"required": [
+									"numPairs"
+								],
+								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
 		"/binance-bot": {
 			"post": {
 				"operationId": "CreateBot",

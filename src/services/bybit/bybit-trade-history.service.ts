@@ -32,7 +32,7 @@ export class BybitTradeHistoryService implements TradeHistoryService {
 
       const savedOrders = await this.ordersDbService.bulkUpsertItems<OrdersWithId>(CONTAINER_NAMES.Orders, orders);
 
-      logger.info(`Successfully saved ${orders.length} Bybit orders for symbol ${symbol}`);
+      logger.info(`Successfully saved ${savedOrders.length} Bybit orders for symbol ${symbol}`);
       return savedOrders;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
