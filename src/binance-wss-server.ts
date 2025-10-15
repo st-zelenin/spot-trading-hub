@@ -6,6 +6,10 @@ import { BinanceService } from './services/binance/binance.service';
 import { logger } from './utils/logger';
 import { mongoDbService } from './services/base-mongodb.service';
 import { BotDbService } from './services/bot/bot-db.service';
+import { BotConfig } from './models/dto/bot-dto';
+
+const clients = new Map<string, { symbol: string; ws: WebSocket }>();
+let uiClient: WebSocket | null = null;
 
 export const startBinanceWssServer = (port: number): void => {
   const wss = new WebSocketServer({ port });
@@ -14,7 +18,6 @@ export const startBinanceWssServer = (port: number): void => {
 
   logger.info(`WebSocket server started on ws://0.0.0.0:${port}`);
 
-  const clients = new Map<string, { symbol: string; ws: WebSocket }>();
   const binance = ExchangeFactory.getExchangeService(ExchangeType.BINANCE) as BinanceService;
   const traidingPairs = [
     'ZKUSDC',
@@ -27,10 +30,12 @@ export const startBinanceWssServer = (port: number): void => {
     'BTCUSDC',
     'ETHUSDC',
     'LINEAUSDC',
-    'SOLUSDC',
     'AVAXUSDC',
     'NEARUSDC',
     'LINKUSDC',
+    'XRPUSDC',
+    'SOLUSDC',
+    'SUIUSDC',
   ];
   const botDbService = new BotDbService(mongoDbService);
 
@@ -46,8 +51,17 @@ export const startBinanceWssServer = (port: number): void => {
       logger.info(`Active clients: ${clients.size}`);
 
       const prices = await binance.getSymbolsPrice(traidingPairs);
+      const pricesMap = prices.reduce(
+        (acc, p) => {
+          acc[p.symbol] = p.price;
+          return acc;
+        },
+        {} as Record<string, string>
+      );
 
-      logger.info(`Fetched prices: ${prices.map((p) => `${p.symbol}: ${p.price}`).join(', ')}`);
+      logger.info('Fetched prices:', { pricesMap });
+
+      uiClient?.send(JSON.stringify({ type: 'prices', data: pricesMap }));
 
       const orders = await binance.getOpenOrders(traidingPairs);
 
@@ -60,7 +74,7 @@ export const startBinanceWssServer = (port: number): void => {
         }
 
         const openOrders = orders.filter((o) => o.symbol === symbol);
-        const currentPrice = prices.find((p) => p.symbol === symbol)?.price;
+        const currentPrice = pricesMap[symbol];
 
         logger.info(`Sending open orders and current price to ${botId}`, { openOrders, currentPrice });
 
@@ -104,6 +118,11 @@ export const startBinanceWssServer = (port: number): void => {
         if (!traidingPairs.includes(data.symbol)) {
           logger.warn(`Symbol ${data.symbol} is not in the traiding pairs list`, { traidingPairs });
         }
+      }
+
+      if (payload.type === 'register-ui-client') {
+        uiClient = ws;
+        logger.info('Registered UI client');
       }
 
       if (payload.type === 'filledOrderDetails') {
@@ -192,5 +211,15 @@ async function handleFilledOrderDetails(
     logger.info('Added filled orders to processing queue', { queueItems });
   } catch (err: unknown) {
     logger.error('handleFilledOrderDetails error', { err });
+  }
+}
+
+export function sendConfigUpdateToBot(botId: string, config: BotConfig): void {
+  const client = clients.get(botId);
+  if (client && client.ws.readyState === WebSocket.OPEN) {
+    client.ws.send(JSON.stringify({ type: 'configUpdated', data: config }));
+    logger.info(`Sent config update to bot ${botId}`, { config });
+  } else {
+    logger.warn(`Bot ${botId} is not connected or WebSocket is not open`);
   }
 }

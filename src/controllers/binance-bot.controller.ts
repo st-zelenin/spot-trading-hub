@@ -1,12 +1,13 @@
-import { Body, Controller, Delete, Get, Path, Post, Put, Route, SuccessResponse, Tags } from 'tsoa';
+import { Body, Controller, Delete, Get, Path, Post, Put, Query, Route, SuccessResponse, Tags } from 'tsoa';
 import { ExchangeType } from '../models/exchange';
 import { BinanceService } from '../services/binance/binance.service';
 import { ExchangeFactory } from '../services/exchange-factory.service';
 import { ApiResponse } from '../models/dto/response-dto';
 import { BotDbService } from '../services/bot/bot-db.service';
 import { mongoDbService } from '../services/base-mongodb.service';
-import { BinanceBotOrder, Bot, BotConfig, BotTradingPair } from '../models/dto/bot-dto';
+import { BinanceBotOrder, Bot, BotConfig, BotTradingPair, PagedData } from '../models/dto/bot-dto';
 import { OrderStatistics } from '../models/dto/statistics.dto';
+import { sendConfigUpdateToBot } from '../binance-wss-server';
 
 @Route('binance-bot')
 @Tags('Binance Bot')
@@ -21,6 +22,26 @@ export class BinanceBotController extends Controller {
   @SuccessResponse('200', 'Bot orders')
   public async getBotOrders(@Path() botId: string): Promise<ApiResponse<BinanceBotOrder[]>> {
     const orders = await this.botDbService.getBotOrders(botId);
+    return {
+      success: true,
+      data: orders,
+    };
+  }
+
+  /**
+   * Get paginated orders from all bots with filtering
+   * @param pageNum Page number (1-based)
+   * @param pageSize Number of items per page
+   * @param side Order side filter (BUY or SELL)
+   */
+  @Get('orders')
+  @SuccessResponse('200', 'Paginated orders')
+  public async getAllOrders(
+    @Query() pageNum: number,
+    @Query() pageSize: number,
+    @Query() side: 'BUY' | 'SELL'
+  ): Promise<ApiResponse<PagedData<BinanceBotOrder>>> {
+    const orders = await this.botDbService.getAllOrdersPaginated(pageNum, pageSize, side);
     return {
       success: true,
       data: orders,
@@ -48,11 +69,14 @@ export class BinanceBotController extends Controller {
    */
   @Put('{botId}/config')
   @SuccessResponse('200', 'Bot configuration updated')
-  public async updateBotConfig(@Path() botId: string, @Body() config: BotConfig): Promise<ApiResponse<null>> {
-    await this.botDbService.updateBot(botId, { config });
+  public async updateBotConfig(@Path() botId: string, @Body() config: BotConfig): Promise<ApiResponse<Bot>> {
+    const data = await this.botDbService.updateBot(botId, { config });
+
+    sendConfigUpdateToBot(botId, data.config);
+
     return {
       success: true,
-      data: null,
+      data,
     };
   }
 
@@ -78,14 +102,14 @@ export class BinanceBotController extends Controller {
    */
   @Put('{botId}/num-pairs')
   @SuccessResponse('200', 'Bot numPairs updated')
-  public async updateBotNumPairs(
-    @Path() botId: string,
-    @Body() body: { numPairs: number }
-  ): Promise<ApiResponse<null>> {
-    await this.botDbService.updateBot(botId, { config: { numPairs: body.numPairs } });
+  public async updateBotNumPairs(@Path() botId: string, @Body() body: { numPairs: number }): Promise<ApiResponse<Bot>> {
+    const data = await this.botDbService.updateBot(botId, { config: { numPairs: body.numPairs } });
+
+    sendConfigUpdateToBot(botId, data.config);
+
     return {
       success: true,
-      data: null,
+      data,
     };
   }
 

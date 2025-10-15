@@ -132,6 +132,7 @@ export interface BotConfig {
 }
 
 export interface BotTradingPair {
+  trailingDelta?: number | null;
   [key: string]: unknown;
 }
 
@@ -151,4 +152,11 @@ export interface FilledOrderQueueItem {
   detailsFetched: boolean;
   createdAt: Date;
   processedAt?: Date;
+}
+
+export interface PagedData<T> {
+  items: T[];
+  total: number;
+  pageNum: number;
+  pageSize: number;
 }

@@ -1,7 +1,7 @@
 import { SpotRestAPI } from '@binance/spot';
 import { MongoDbService } from '../base-mongodb.service';
 import { logger } from '../../utils/logger';
-import { BaseBot, BinanceBotOrder, Bot, BotConfig, FilledOrderQueueItem } from '../../models/dto/bot-dto';
+import { BaseBot, BinanceBotOrder, Bot, BotConfig, FilledOrderQueueItem, PagedData } from '../../models/dto/bot-dto';
 import { NotFoundError, ValidationError } from '../../models/errors';
 import { Document, ObjectId, WithId } from 'mongodb';
 import { env } from '../../config/env';
@@ -40,6 +40,28 @@ export class BotDbService {
       return orders;
     } catch (error: unknown) {
       throw this.mongoDbService.getMongoDbError('Failed to get bot orders', error);
+    }
+  }
+
+  public async getAllOrdersPaginated(
+    pageNum: number,
+    pageSize: number,
+    side: 'BUY' | 'SELL'
+  ): Promise<PagedData<BinanceBotOrder>> {
+    try {
+      const collection = await this.mongoDbService.getCollection<BinanceBotOrder>(this.getCollectionName('orders'));
+
+      const filter = { side };
+      const skip = (pageNum - 1) * pageSize;
+
+      const total = await collection.countDocuments(filter);
+      const items = await collection.find(filter).sort({ updateTime: -1 }).skip(skip).limit(pageSize).toArray();
+
+      logger.info(`Retrieved ${items.length} orders (page ${pageNum}, size ${pageSize}, side ${side})`);
+
+      return { items, total, pageNum, pageSize };
+    } catch (error: unknown) {
+      throw this.mongoDbService.getMongoDbError('Failed to get paginated orders', error);
     }
   }
 

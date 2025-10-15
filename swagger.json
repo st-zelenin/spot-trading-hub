@@ -151,6 +151,10 @@
 						"type": "number",
 						"format": "double"
 					},
+					"trailingDelta": {
+						"type": "number",
+						"format": "double"
+					},
 					"id": {
 						"type": "string"
 					}
@@ -212,6 +216,10 @@
 						"format": "double"
 					},
 					"sellOrderId": {
+						"type": "number",
+						"format": "double"
+					},
+					"trailingDelta": {
 						"type": "number",
 						"format": "double"
 					}
@@ -843,13 +851,71 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"PagedData_BinanceBotOrder_": {
+				"properties": {
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/BinanceBotOrder"
+						},
+						"type": "array"
+					},
+					"total": {
+						"type": "number",
+						"format": "double"
+					},
+					"pageNum": {
+						"type": "number",
+						"format": "double"
+					},
+					"pageSize": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"items",
+					"total",
+					"pageNum",
+					"pageSize"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ApiResponse_PagedData_BinanceBotOrder__": {
+				"description": "Base response interface for all API responses",
+				"properties": {
+					"success": {
+						"type": "boolean",
+						"description": "Indicates if the operation was successful"
+					},
+					"error": {
+						"type": "string",
+						"description": "Optional error message in case of failure"
+					},
+					"data": {
+						"$ref": "#/components/schemas/PagedData_BinanceBotOrder_",
+						"description": "Optional data payload in case of success"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"BotConfig": {
 				"properties": {},
 				"type": "object",
 				"additionalProperties": {}
 			},
 			"BotTradingPair": {
-				"properties": {},
+				"properties": {
+					"trailingDelta": {
+						"type": "number",
+						"format": "double",
+						"nullable": true
+					}
+				},
 				"type": "object",
 				"additionalProperties": {}
 			},
@@ -1855,6 +1921,63 @@
 				]
 			}
 		},
+		"/binance-bot/orders": {
+			"get": {
+				"operationId": "GetAllOrders",
+				"responses": {
+					"200": {
+						"description": "Paginated orders",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_PagedData_BinanceBotOrder__"
+								}
+							}
+						}
+					}
+				},
+				"description": "Get paginated orders from all bots with filtering",
+				"tags": [
+					"Binance Bot"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "Page number (1-based)",
+						"in": "query",
+						"name": "pageNum",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"description": "Number of items per page",
+						"in": "query",
+						"name": "pageSize",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"description": "Order side filter (BUY or SELL)",
+						"in": "query",
+						"name": "side",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"BUY",
+								"SELL"
+							]
+						}
+					}
+				]
+			}
+		},
 		"/binance-bot/{botId}": {
 			"get": {
 				"operationId": "GetBot",
@@ -1897,7 +2020,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_null_"
+									"$ref": "#/components/schemas/ApiResponse_Bot_"
 								}
 							}
 						}
@@ -1990,7 +2113,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_null_"
+									"$ref": "#/components/schemas/ApiResponse_Bot_"
 								}
 							}
 						}

@@ -1,4 +1,4 @@
-import { RestClientV5, OrderParamsV5, AccountOrderV5 } from 'bybit-api';
+import { RestClientV5, OrderParamsV5, AccountOrderV5, ExecutionV5 } from 'bybit-api';
 import { ExchangeService } from '../interfaces/exchange-service.interface';
 import { env } from '../../config/env';
 import { logger } from '../../utils/logger';
@@ -8,6 +8,8 @@ import { Product } from '../../models/product';
 import Decimal from 'decimal.js';
 import { BaseApiError, ExchangeError, NotFoundError, ValidationError } from '../../models/errors';
 import { Trader } from '../../models/dto/user-dto';
+import { BybitDatabaseOrderModel } from '../../models/dto/order-dto';
+import Bottleneck from 'bottleneck';
 
 /**
  * Bybit exchange service implementation
@@ -16,42 +18,166 @@ import { Trader } from '../../models/dto/user-dto';
 export class BybitService implements ExchangeService {
   private readonly client: RestClientV5;
   private readonly symbolInfoCache: Map<string, SymbolInfo> = new Map();
+  private readonly limiter: Bottleneck;
 
   constructor() {
+    // Default settings: 120 requests per minute = 2 requests per second
+    this.limiter = new Bottleneck({
+      maxConcurrent: 5, // Maximum number of requests running at the same time
+      minTime: 500, // Minimum time between requests (in ms) - 2 requests per second
+      reservoir: 120, // Initial number of requests that can be made
+      reservoirRefreshAmount: 120, // Number of requests that will be added to the reservoir
+      reservoirRefreshInterval: 60 * 1000, // How often the reservoir will be refreshed (1 minute)
+    });
+
+    // Add retry mechanism for failed requests
+    this.limiter.on('failed', (error, jobInfo) => {
+      const maxRetries = 3;
+      if (jobInfo.retryCount < maxRetries) {
+        // Exponential backoff: 1000ms, 2000ms, 4000ms
+        const retryDelay = 1000 * Math.pow(2, jobInfo.retryCount);
+        logger.warn(`Retrying failed request (${jobInfo.retryCount + 1}/${maxRetries}):`, { error });
+        return retryDelay;
+      }
+      logger.error(`Request failed after ${maxRetries} retries: `, { error });
+      return null; // Stop retrying
+    });
+
     this.client = new RestClientV5({
       key: env.BYBIT_API_KEY,
       secret: env.BYBIT_API_SECRET,
     });
-    logger.info('Bybit service initialized');
+    logger.info('Bybit service initialized with rate limiting');
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public getOrderHistory(_symbol: string, _startTime: number, _chunkEndTime: number): Promise<unknown[]> {
-    throw new Error('Method not implemented.');
+  public async getOrderHistory(symbol: string, startTime: number, endTime: number): Promise<BybitDatabaseOrderModel[]> {
+    try {
+      logger.info(`Fetching order history for ${symbol}`, {
+        start: new Date(startTime).toISOString(),
+        end: new Date(endTime).toISOString(),
+      });
+
+      // Simple wrapper around fetchOrderHistoryChunk
+      // Chunking responsibility is handled by the calling service (e.g., syncFullHistory)
+      return await this.fetchOrderHistoryChunk(symbol, startTime, endTime);
+    } catch (error) {
+      throw this.getExchangeError(`Failed to fetch order history for ${symbol}`, error);
+    }
   }
 
-  public async getSymbolRecentFilledOrders(symbol: string): Promise<AccountOrderV5[]> {
+  private async fetchOrderHistoryChunk(
+    symbol: string,
+    startTime?: number,
+    endTime?: number
+  ): Promise<BybitDatabaseOrderModel[]> {
+    const logContext =
+      startTime && endTime
+        ? {
+            start: new Date(startTime).toISOString(),
+            end: new Date(endTime).toISOString(),
+          }
+        : { timeRange: 'recent orders only' };
+
+    logger.info(`Fetching order history chunk for ${symbol}`, logContext);
+
+    // 1) Get filled orders from Order History
+    const orderHistoryParams: {
+      category: 'spot';
+      symbol: string;
+      startTime?: number;
+      endTime?: number;
+    } = {
+      category: 'spot',
+      symbol,
+    };
+
+    if (startTime && endTime) {
+      orderHistoryParams.startTime = startTime;
+      orderHistoryParams.endTime = endTime;
+    }
+
+    const orderHistoryResponse = await this.executeWithRateLimit(() =>
+      this.client.getHistoricOrders(orderHistoryParams)
+    );
+
+    if (orderHistoryResponse.retCode !== 0) {
+      throw new Error(`Failed to fetch order history: ${orderHistoryResponse.retMsg}`);
+    }
+
+    const orderHistoryList = orderHistoryResponse.result?.list || [];
+    const filledFromOrderHistory = orderHistoryList.filter((order) => order.orderStatus === 'Filled');
+
+    // 2) Get executions from Trade History to find any missing filled orders
+    const tradeHistoryParams: {
+      category: 'spot';
+      symbol: string;
+      startTime?: number;
+      endTime?: number;
+    } = {
+      category: 'spot',
+      symbol,
+    };
+
+    if (startTime && endTime) {
+      tradeHistoryParams.startTime = startTime;
+      tradeHistoryParams.endTime = endTime;
+    }
+
+    const tradeHistoryResponse = await this.executeWithRateLimit(() =>
+      this.client.getExecutionList(tradeHistoryParams)
+    );
+
+    if (tradeHistoryResponse.retCode !== 0) {
+      throw new Error(`Failed to fetch trade history: ${tradeHistoryResponse.retMsg}`);
+    }
+
+    const executions = tradeHistoryResponse.result?.list || [];
+    const executionOrderIds = new Set<string>();
+    for (const exec of executions as Array<{ orderId?: string }>) {
+      if (exec.orderId) executionOrderIds.add(exec.orderId);
+    }
+
+    // 3) Find order IDs that exist in trade history but not in order history
+    const orderHistoryIds = new Set(filledFromOrderHistory.map((o) => o.orderId));
+    const missingOrderIds = Array.from(executionOrderIds).filter((id) => !orderHistoryIds.has(id));
+
+    // 4) Reconstruct missing orders from trade executions
+    const reconstructedOrders: BybitDatabaseOrderModel[] = [];
+
+    for (const orderId of missingOrderIds) {
+      // Find all executions for this order
+      const orderExecutions = executions.filter((exec: ExecutionV5) => exec.orderId === orderId);
+      if (orderExecutions.length > 0) {
+        const dbModel = this.mapExecutionsToBybitOrder(orderExecutions, orderId);
+        reconstructedOrders.push(dbModel);
+        logger.debug(`Reconstructed order from ${orderExecutions.length} executions`, { orderId });
+      }
+    }
+
+    // 5) Convert order history to BybitOrderV5 format and combine with reconstructed orders
+    const convertedOrderHistory = filledFromOrderHistory.map((order) => this.mapAccountOrderToFilledBybitOrder(order));
+    const allFilledOrders = [...convertedOrderHistory, ...reconstructedOrders];
+    const deduped = new Map<string, BybitDatabaseOrderModel>();
+    for (const order of allFilledOrders) {
+      deduped.set(order.orderId, order);
+    }
+
+    const result = Array.from(deduped.values());
+    logger.info(
+      `Fetched ${result.length} orders for ${symbol} in time chunk (${filledFromOrderHistory.length} from order history + ${reconstructedOrders.length} reconstructed)`
+    );
+
+    return result;
+  }
+
+  public async getSymbolRecentFilledOrders(symbol: string): Promise<BybitDatabaseOrderModel[]> {
     try {
       logger.info(`Fetching recent filled ${symbol} orders from Bybit`);
 
-      // // Calculate startTime for 20 days ago
-      // const twentyDaysAgo = new Date();
-      // twentyDaysAgo.setDate(twentyDaysAgo.getDate() - 20);
-      // const startTime = twentyDaysAgo.getTime();
+      const result = await this.fetchOrderHistoryChunk(symbol);
 
-      const response = await this.client.getHistoricOrders({
-        category: 'spot',
-        symbol,
-      });
-
-      if (response.retCode !== 0) {
-        throw new Error(`Failed to fetch recent filled orders: ${response.retMsg}`);
-      }
-
-      const orders = response.result?.list || [];
-      logger.info(`Fetched ${orders.length} recent filled orders from Bybit`);
-
-      return orders.filter((order) => order.orderStatus === 'Filled');
+      logger.info(`Fetched ${result.length} recent filled orders from Bybit (combined Order History + Trade History)`);
+      return result;
     } catch (error) {
       throw this.getExchangeError('Failed to fetch recent filled orders', error);
     }
@@ -61,11 +187,13 @@ export class BybitService implements ExchangeService {
     try {
       logger.info(`Fetching order ${orderId} for symbol ${symbol} from Bybit`);
 
-      const historicOrdersResponse = await this.client.getHistoricOrders({
-        category: 'spot',
-        symbol,
-        orderId,
-      });
+      const historicOrdersResponse = await this.executeWithRateLimit(() =>
+        this.client.getHistoricOrders({
+          category: 'spot',
+          symbol,
+          orderId,
+        })
+      );
 
       if (historicOrdersResponse.retCode !== 0) {
         throw new Error(`Failed to fetch order: ${historicOrdersResponse.retMsg}`);
@@ -75,15 +203,16 @@ export class BybitService implements ExchangeService {
 
       if (historicOrders.length) {
         logger.info(`Successfully fetched order ${orderId} for symbol ${symbol} (historic orders)`);
-        // TODO: test and return first
         return historicOrders;
       }
 
-      const activeOrdersResponse = await this.client.getActiveOrders({
-        category: 'spot',
-        symbol,
-        orderId,
-      });
+      const activeOrdersResponse = await this.executeWithRateLimit(() =>
+        this.client.getActiveOrders({
+          category: 'spot',
+          symbol,
+          orderId,
+        })
+      );
 
       if (activeOrdersResponse.retCode !== 0) {
         throw new Error(`Failed to fetch order: ${activeOrdersResponse.retMsg}`);
@@ -93,7 +222,6 @@ export class BybitService implements ExchangeService {
 
       if (activeOrders.length) {
         logger.info(`Successfully fetched order ${orderId} for symbol ${symbol} (active orders)`);
-        // TODO: test and return first
         return activeOrders;
       }
 
@@ -142,7 +270,7 @@ export class BybitService implements ExchangeService {
     }
   }
 
-  public async getAllOpenOrders(): Promise<AccountOrderV5[]> {
+  public async getAllOpenOrders(): Promise<BybitDatabaseOrderModel[]> {
     try {
       const response = await this.client.getActiveOrders({
         category: 'spot',
@@ -152,7 +280,8 @@ export class BybitService implements ExchangeService {
         throw new Error(`Failed to get open orders: ${response.retMsg}`);
       }
 
-      return response.result?.list || [];
+      const orders = response.result?.list || [];
+      return orders.map((order) => this.mapAccountOrderToFilledBybitOrder(order));
     } catch (error) {
       throw this.getExchangeError('Failed to get all open orders', error);
     }
@@ -397,6 +526,17 @@ export class BybitService implements ExchangeService {
     }
   }
 
+  /**
+   * Wraps API calls with the rate limiter and retry mechanism
+   * @param fn The function to execute with rate limiting
+   * @returns The result of the function
+   */
+  private async executeWithRateLimit<T>(fn: () => Promise<T>): Promise<T> {
+    return this.limiter.schedule(() => fn());
+    // Errors will be handled by the 'failed' event handler for retries
+    // If all retries fail, the error will be propagated automatically
+  }
+
   private getExchangeError(baseMessage: string, error: unknown): ExchangeError {
     if (error instanceof BaseApiError) {
       return error;
@@ -404,5 +544,53 @@ export class BybitService implements ExchangeService {
 
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new ExchangeError(`${baseMessage}: ${errorMessage}`);
+  }
+
+  private mapAccountOrderToFilledBybitOrder(order: AccountOrderV5): BybitDatabaseOrderModel {
+    return {
+      id: order.orderId,
+      orderId: order.orderId,
+      symbol: order.symbol,
+      orderLinkId: order.orderLinkId,
+      price: order.price,
+      origQty: order.qty,
+      executedQty: order.cumExecQty,
+      cummulativeQuoteQty: order.cumExecValue,
+      avgPrice: order.avgPrice,
+      status: 'FILLED',
+      type: order.orderType === 'Market' ? 'MARKET' : 'LIMIT',
+      side: order.side,
+      time: order.createdTime,
+      updateTime: order.updatedTime,
+    };
+  }
+
+  private mapExecutionsToBybitOrder(executions: ExecutionV5[], orderId: string): BybitDatabaseOrderModel {
+    if (executions.length === 0) {
+      throw new Error('Cannot map empty executions array to order');
+    }
+
+    const [firstExec] = executions;
+
+    const totalQty = executions.reduce((sum, exec) => sum + parseFloat(exec.execQty), 0);
+    const totalValue = executions.reduce((sum, exec) => sum + parseFloat(exec.execValue), 0);
+    const avgPrice = totalValue / totalQty;
+
+    return {
+      id: orderId,
+      orderId: orderId,
+      symbol: firstExec.symbol,
+      orderLinkId: firstExec.orderLinkId,
+      price: avgPrice.toString(),
+      origQty: totalQty.toString(),
+      executedQty: totalQty.toString(),
+      cummulativeQuoteQty: totalValue.toString(),
+      avgPrice: avgPrice.toString(),
+      status: 'FILLED',
+      type: firstExec.orderType === 'Market' ? 'MARKET' : 'LIMIT',
+      side: firstExec.side,
+      time: firstExec.execTime,
+      updateTime: executions[executions.length - 1].execTime,
+    };
   }
 }

@@ -1,4 +1,23 @@
+import { OrderSideV5 } from 'bybit-api';
 import { ExchangeType } from '../exchange';
+
+export interface BybitDatabaseOrderModel {
+  /** by design same as orderId */
+  id: string;
+  orderId: string;
+  symbol: string;
+  orderLinkId: string;
+  price: string;
+  origQty: string;
+  executedQty: string;
+  cummulativeQuoteQty: string;
+  avgPrice: string;
+  status: 'FILLED';
+  type: 'MARKET' | 'LIMIT';
+  side: OrderSideV5;
+  time: string;
+  updateTime: string;
+}
 
 /**
  * Request body for cancelling an order

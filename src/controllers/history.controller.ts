@@ -110,9 +110,13 @@ export class TradeHistoryController extends Controller {
     logger.info(`Syncing full history for exchange: ${exchange}, symbol: ${symbol}`);
 
     const historySyncService = HistorySyncFactory.getHistorySyncService(exchange, this.tradingService);
-    const fullHistory = await historySyncService.syncFullHistory(symbol);
+    const tradeHistoryService = TradeHistoryFactory.getTradeHistoryService(exchange);
 
+    const fullHistory = await historySyncService.syncFullHistory(symbol);
     logger.info(`Successfully synced full history for ${exchange}, symbol: ${symbol}`);
+
+    await tradeHistoryService.saveOrders(symbol, fullHistory);
+    logger.info(`Successfully saved full history for ${exchange}, symbol: ${symbol}`);
 
     return {
       success: true,

@@ -9,4 +9,5 @@ export interface NewTradingPair {
   buyFilled: boolean;
   buyOrderId?: number;
   sellOrderId?: number;
+  trailingDelta?: number;
 }
