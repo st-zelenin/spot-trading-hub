@@ -526,6 +526,83 @@ export class BybitService implements ExchangeService {
     }
   }
 
+  public async placeLimitOrder(side: 'buy' | 'sell', symbol: string, amount: number, price: number): Promise<string> {
+    logger.info(`Placing limit order: side=${side}, symbol=${symbol}, amount=${amount}, price=${price}`);
+
+    if (amount <= 0) {
+      throw new ValidationError('Amount must be greater than 0');
+    }
+
+    if (price <= 0) {
+      throw new ValidationError('Price must be greater than 0');
+    }
+
+    try {
+      const symbolInfo = await this.getExchangeInfo(symbol);
+
+      const orderOptions: OrderParamsV5 = {
+        category: 'spot',
+        symbol,
+        side: side === 'buy' ? 'Buy' : 'Sell',
+        orderType: 'Limit',
+        qty: this.formatQuantity(amount, symbolInfo.stepSize),
+        price: this.formatPriceWithPrecision(price, symbolInfo.tickSize),
+        timeInForce: 'GTC',
+      };
+
+      const response = await this.executeWithRateLimit(() => this.client.submitOrder(orderOptions));
+
+      if (response.retCode !== 0) {
+        throw new Error(`Failed to place order: ${response.retMsg}`);
+      }
+
+      const orderId = response.result?.orderId;
+      if (!orderId) {
+        throw new Error('Order ID is undefined');
+      }
+
+      logger.info(`Placed limit order: id=${orderId}`);
+      return orderId.toString();
+    } catch (error) {
+      throw this.getExchangeError('Failed to place limit order', error);
+    }
+  }
+
+  public async placeMarketOrder(side: 'buy' | 'sell', symbol: string, amount: number): Promise<string> {
+    logger.info(`Placing market order: side=${side}, symbol=${symbol}, amount=${amount}`);
+
+    if (amount <= 0) {
+      throw new ValidationError('Amount must be greater than 0');
+    }
+
+    try {
+      const orderOptions: OrderParamsV5 = {
+        category: 'spot',
+        symbol,
+        side: side === 'buy' ? 'Buy' : 'Sell',
+        orderType: 'Market',
+        qty: amount.toString(),
+        marketUnit: 'quoteCoin',
+      };
+
+      const response = await this.executeWithRateLimit(() => this.client.submitOrder(orderOptions));
+
+      if (response.retCode !== 0) {
+        throw new Error(`Failed to place order: ${response.retMsg}`);
+      }
+
+      const orderId = response.result?.orderId;
+      if (!orderId) {
+        throw new Error('Order ID is undefined');
+      }
+
+      logger.info(`Placed market order: id=${orderId}`);
+      return orderId.toString();
+    } catch (error) {
+      throw this.getExchangeError('Failed to place market order', error);
+    }
+  }
+
   /**
    * Wraps API calls with the rate limiter and retry mechanism
    * @param fn The function to execute with rate limiting

@@ -68,6 +68,25 @@ export interface ExchangeService {
    */
   getUserTrades(symbol: string, limit?: number): Promise<unknown>;
 
+  /**
+   * Places a limit order on the exchange
+   * @param side The order side ('buy' or 'sell')
+   * @param symbol The trading pair symbol
+   * @param amount The quantity to trade
+   * @param price The limit price
+   * @returns A promise that resolves to the order ID
+   */
+  placeLimitOrder(side: 'buy' | 'sell', symbol: string, amount: number, price: number): Promise<string>;
+
+  /**
+   * Places a market order on the exchange
+   * @param side The order side ('buy' or 'sell')
+   * @param symbol The trading pair symbol
+   * @param quoteQuantity The amount in quote asset (e.g., USDT) to spend on the order
+   * @returns A promise that resolves to the order ID
+   */
+  placeMarketOrder(side: 'buy' | 'sell', symbol: string, quoteQuantity: number): Promise<string>;
+
   // Additional methods will be added later for other CRUD operations
   // createOrder(order: Partial<Order>): Promise<OrderResponse>;
   // getOrders(symbol?: string): Promise<OrderResponse>;

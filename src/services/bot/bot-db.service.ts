@@ -1,7 +1,15 @@
 import { SpotRestAPI } from '@binance/spot';
 import { MongoDbService } from '../base-mongodb.service';
 import { logger } from '../../utils/logger';
-import { BaseBot, BinanceBotOrder, Bot, BotConfig, FilledOrderQueueItem, PagedData } from '../../models/dto/bot-dto';
+import {
+  BaseBot,
+  BinanceBotOrder,
+  Bot,
+  BotConfig,
+  FilledOrderQueueItem,
+  NewFilledOrderQueueItem,
+  PagedData,
+} from '../../models/dto/bot-dto';
 import { NotFoundError, ValidationError } from '../../models/errors';
 import { Document, ObjectId, WithId } from 'mongodb';
 import { env } from '../../config/env';
@@ -182,9 +190,7 @@ export class BotDbService {
    * Insert items into the filledOrdersQueue collection
    * @param items Array of queue items to insert
    */
-  public async insertFilledOrdersQueue(
-    items: Omit<FilledOrderQueueItem, 'createdAt' | 'detailsFetched'>[]
-  ): Promise<void> {
+  public async insertFilledOrdersQueue(items: NewFilledOrderQueueItem[]): Promise<void> {
     try {
       const collection = await this.mongoDbService.getCollection<FilledOrderQueueItem>(
         this.getCollectionName('filledOrdersQueue')
@@ -217,12 +223,45 @@ export class BotDbService {
         this.getCollectionName('filledOrdersQueue')
       );
 
-      const items = await collection.find({ detailsFetched: false }).sort({ createdAt: 1 }).limit(limit).toArray();
+      const items = await collection
+        .find({
+          detailsFetched: false,
+          $or: [{ type: { $exists: false } }, { type: 'filled' }],
+        })
+        .sort({ createdAt: 1 })
+        .limit(limit)
+        .toArray();
 
       logger.info(`Retrieved ${items.length} unprocessed items from filledOrdersQueue`);
       return items;
     } catch (error: unknown) {
       throw this.mongoDbService.getMongoDbError('Failed to get unprocessed items from filledOrdersQueue', error);
+    }
+  }
+
+  /**
+   * Get pending orders from the filledOrdersQueue for status checking
+   * @param limit Maximum number of items to retrieve
+   */
+  public async getPendingOrders(limit: number): Promise<FilledOrderQueueItem[]> {
+    try {
+      const collection = await this.mongoDbService.getCollection<FilledOrderQueueItem>(
+        this.getCollectionName('filledOrdersQueue')
+      );
+
+      const items = await collection
+        .find({
+          detailsFetched: false,
+          type: 'pending',
+        })
+        .sort({ createdAt: 1 })
+        .limit(limit)
+        .toArray();
+
+      logger.info(`Retrieved ${items.length} pending orders from filledOrdersQueue`);
+      return items;
+    } catch (error: unknown) {
+      throw this.mongoDbService.getMongoDbError('Failed to get pending orders from filledOrdersQueue', error);
     }
   }
 

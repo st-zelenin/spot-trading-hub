@@ -89,5 +89,53 @@ export interface TrailingTakeProfitLimitSellOrderRequest {
 }
 
 /**
- * Additional order-related DTOs will be added here
+ * Request body for placing limit orders
  */
+export interface PlaceLimitOrderRequest {
+  /**
+   * The side of the order (buy or sell)
+   * @example "buy"
+   */
+  readonly side: 'buy' | 'sell';
+
+  /**
+   * The price for the order
+   * @example 100000.01
+   */
+  readonly price: number;
+
+  /**
+   * The amount/quantity to trade
+   * @example 0.01
+   */
+  readonly quantity: number;
+
+  /**
+   * The trading pair symbol
+   * @example "BTCUSDT"
+   */
+  readonly symbol: string;
+}
+
+/**
+ * Request body for placing market orders
+ */
+export interface PlaceMarketOrderRequest {
+  /**
+   * The side of the order (buy or sell)
+   * @example "buy"
+   */
+  readonly side: 'buy' | 'sell';
+
+  /**
+   * The total value of the order (quote quantity)
+   * @example 100
+   */
+  readonly total: number;
+
+  /**
+   * The trading pair symbol
+   * @example "BTCUSDT"
+   */
+  readonly symbol: string;
+}

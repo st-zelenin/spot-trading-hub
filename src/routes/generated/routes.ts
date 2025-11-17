@@ -190,6 +190,37 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ApiResponse_string_": {
+        "dataType": "refObject",
+        "properties": {
+            "success": {"dataType":"boolean","required":true},
+            "error": {"dataType":"string"},
+            "data": {"dataType":"string"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "PlaceLimitOrderRequest": {
+        "dataType": "refObject",
+        "properties": {
+            "side": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["buy"]},{"dataType":"enum","enums":["sell"]}],"required":true},
+            "price": {"dataType":"double","required":true},
+            "quantity": {"dataType":"double","required":true},
+            "symbol": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "PlaceMarketOrderRequest": {
+        "dataType": "refObject",
+        "properties": {
+            "side": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["buy"]},{"dataType":"enum","enums":["sell"]}],"required":true},
+            "total": {"dataType":"double","required":true},
+            "symbol": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "TradeHistoryRequestDto": {
         "dataType": "refObject",
         "properties": {
@@ -869,6 +900,68 @@ export function RegisterRoutes(app: Router) {
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsOrderController_placeLimitOrder: Record<string, TsoaRoute.ParameterSchema> = {
+                exchange: {"in":"path","name":"exchange","required":true,"ref":"ExchangeType"},
+                request: {"in":"body","name":"request","required":true,"ref":"PlaceLimitOrderRequest"},
+        };
+        app.post('/order/:exchange/limit',
+            ...(fetchMiddlewares<RequestHandler>(OrderController)),
+            ...(fetchMiddlewares<RequestHandler>(OrderController.prototype.placeLimitOrder)),
+
+            async function OrderController_placeLimitOrder(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsOrderController_placeLimitOrder, request, response });
+
+                const controller = new OrderController();
+
+              await templateService.apiHandler({
+                methodName: 'placeLimitOrder',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsOrderController_placeMarketOrder: Record<string, TsoaRoute.ParameterSchema> = {
+                exchange: {"in":"path","name":"exchange","required":true,"ref":"ExchangeType"},
+                request: {"in":"body","name":"request","required":true,"ref":"PlaceMarketOrderRequest"},
+        };
+        app.post('/order/:exchange/market',
+            ...(fetchMiddlewares<RequestHandler>(OrderController)),
+            ...(fetchMiddlewares<RequestHandler>(OrderController.prototype.placeMarketOrder)),
+
+            async function OrderController_placeMarketOrder(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsOrderController_placeMarketOrder, request, response });
+
+                const controller = new OrderController();
+
+              await templateService.apiHandler({
+                methodName: 'placeMarketOrder',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsTradeHistoryController_getUserTrades: Record<string, TsoaRoute.ParameterSchema> = {
                 requestBody: {"in":"body","name":"requestBody","required":true,"ref":"TradeHistoryRequestDto"},
         };
@@ -1404,6 +1497,37 @@ export function RegisterRoutes(app: Router) {
 
               await templateService.apiHandler({
                 methodName: 'addBotFilledOrder',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsBinanceBotController_insertFilledOrderQueue: Record<string, TsoaRoute.ParameterSchema> = {
+                botId: {"in":"path","name":"botId","required":true,"dataType":"string"},
+                request: {"in":"body","name":"request","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"symbol":{"dataType":"string","required":true},"orderId":{"dataType":"double","required":true}}},
+        };
+        app.post('/binance-bot/:botId/pending-order',
+            ...(fetchMiddlewares<RequestHandler>(BinanceBotController)),
+            ...(fetchMiddlewares<RequestHandler>(BinanceBotController.prototype.insertFilledOrderQueue)),
+
+            async function BinanceBotController_insertFilledOrderQueue(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsBinanceBotController_insertFilledOrderQueue, request, response });
+
+                const controller = new BinanceBotController();
+
+              await templateService.apiHandler({
+                methodName: 'insertFilledOrderQueue',
                 controller,
                 response,
                 next,

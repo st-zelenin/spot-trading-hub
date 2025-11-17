@@ -5,7 +5,14 @@ import { ExchangeFactory } from '../services/exchange-factory.service';
 import { ApiResponse } from '../models/dto/response-dto';
 import { BotDbService } from '../services/bot/bot-db.service';
 import { mongoDbService } from '../services/base-mongodb.service';
-import { BinanceBotOrder, Bot, BotConfig, BotTradingPair, PagedData } from '../models/dto/bot-dto';
+import {
+  BinanceBotOrder,
+  Bot,
+  BotConfig,
+  BotTradingPair,
+  NewFilledOrderQueueItem,
+  PagedData,
+} from '../models/dto/bot-dto';
 import { OrderStatistics } from '../models/dto/statistics.dto';
 import { sendConfigUpdateToBot } from '../binance-wss-server';
 
@@ -187,6 +194,62 @@ export class BinanceBotController extends Controller {
     return {
       success: true,
       data: { ...order, botId },
+    };
+  }
+
+  // /**
+  //  * Place a limit order and add it to pending queue
+  //  * @param botId The ID of the bot
+  //  * @param request The limit order request
+  //  */
+  // @Post('{botId}/limit-order')
+  // @SuccessResponse('200', 'Limit order placed and queued')
+  // public async placeLimitOrder(
+  //   @Path() botId: string,
+  //   @Body() request: Omit<PlaceLimitOrderRequest, 'side'>
+  // ): Promise<ApiResponse<string>> {
+  //   const binanceService = ExchangeFactory.getExchangeService(ExchangeType.BINANCE) as BinanceService;
+
+  //   const orderId = await binanceService.placeLimitOrder('sell', request.symbol, request.quantity, request.price);
+
+  //   const queueItem: NewFilledOrderQueueItem = {
+  //     botId,
+  //     orderId: parseInt(orderId, 10),
+  //     symbol: request.symbol,
+  //     type: 'pending',
+  //   };
+
+  //   await this.botDbService.insertFilledOrdersQueue([queueItem]);
+
+  //   return {
+  //     success: true,
+  //     data: orderId,
+  //   };
+  // }
+
+  /**
+   * Insert a filled order into the processing queue
+   * @param botId The ID of the bot
+   * @param request The order request containing orderId and symbol
+   */
+  @Post('{botId}/pending-order')
+  @SuccessResponse('200', 'Filled order added to queue')
+  public async insertFilledOrderQueue(
+    @Path() botId: string,
+    @Body() request: { orderId: number; symbol: string }
+  ): Promise<ApiResponse<null>> {
+    const queueItem: NewFilledOrderQueueItem = {
+      botId,
+      orderId: request.orderId,
+      symbol: request.symbol,
+      type: 'pending',
+    };
+
+    await this.botDbService.insertFilledOrdersQueue([queueItem]);
+
+    return {
+      success: true,
+      data: null,
     };
   }
 

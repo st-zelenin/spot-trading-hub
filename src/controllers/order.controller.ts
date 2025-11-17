@@ -1,13 +1,15 @@
-import { Body, Controller, Get, Post, Query, Route, SuccessResponse, Tags } from 'tsoa';
+import { Body, Controller, Get, Path, Post, Query, Route, SuccessResponse, Tags } from 'tsoa';
 import { ExchangeFactory } from '../services/exchange-factory.service';
+import { ExchangeType } from '../models/exchange';
 import { logger } from '../utils/logger';
 import {
   CancelOrderRequest,
   CancelAllOrdersRequest,
   TrailingTakeProfitLimitSellOrderRequest,
+  PlaceLimitOrderRequest,
+  PlaceMarketOrderRequest,
 } from '../models/dto/order-dto';
 import { ApiResponse } from '../models/dto/response-dto';
-import { ExchangeType } from '../models/exchange';
 
 /**
  * Controller for handling order-related operations
@@ -122,6 +124,53 @@ export class OrderController extends Controller {
     return {
       success: true,
       data: orders,
+    };
+  }
+
+  /**
+   * Place a limit order on the specified exchange
+   * @param exchange The exchange to place the order on
+   * @param request The order request payload
+   * @returns The order ID
+   */
+  @Post('{exchange}/limit')
+  public async placeLimitOrder(
+    @Path() exchange: ExchangeType,
+    @Body() request: PlaceLimitOrderRequest
+  ): Promise<ApiResponse<string>> {
+    const exchangeService = ExchangeFactory.getExchangeService(exchange);
+
+    const orderId = await exchangeService.placeLimitOrder(
+      request.side,
+      request.symbol,
+      request.quantity,
+      request.price
+    );
+
+    return {
+      success: true,
+      data: orderId,
+    };
+  }
+
+  /**
+   * Place a market order on the specified exchange
+   * @param exchange The exchange to place the order on
+   * @param request The order request payload
+   * @returns The order ID
+   */
+  @Post('{exchange}/market')
+  public async placeMarketOrder(
+    @Path() exchange: ExchangeType,
+    @Body() request: PlaceMarketOrderRequest
+  ): Promise<ApiResponse<string>> {
+    const exchangeService = ExchangeFactory.getExchangeService(exchange);
+
+    const orderId = await exchangeService.placeMarketOrder(request.side, request.symbol, request.total);
+
+    return {
+      success: true,
+      data: orderId,
     };
   }
 }

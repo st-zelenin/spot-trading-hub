@@ -13,12 +13,18 @@ import { bybitDbService } from './services/bybit/bybit-db.service';
 import { binanceDbService } from './services/binance/binance-db.service';
 import { tradingDbService } from './services/trading/trading-db.service';
 import { mongoDbService } from './services/base-mongodb.service';
+import { OrderSyncService } from './services/order-sync.service';
+import { TradingService } from './services/trading/trading.service';
 import { CONTAINER_NAMES } from './constants';
 import { errorHandlingMiddleware } from './error-handling.middleware';
 import { startBinanceWssServer } from './binance-wss-server';
+import { ExchangeType } from './models/exchange';
 
 // Create Express application
 const app = express();
+
+// Global reference to sync service for graceful shutdown
+let bybitOrderSyncService: OrderSyncService | null = null;
 
 // Middleware
 app.use(express.json());
@@ -46,27 +52,6 @@ app.get('/health', (_req, res) => {
 
 app.use(errorHandlingMiddleware);
 
-// Initialize Binance DB service
-binanceDbService.initialize(CONTAINER_NAMES.Orders).catch((error: unknown) => {
-  logger.error('Failed to initialize Binance DB service', {
-    error: error instanceof Error ? error.message : 'Unknown error',
-  });
-});
-
-// Initialize Bybit DB service
-bybitDbService.initialize(CONTAINER_NAMES.Orders).catch((error: unknown) => {
-  logger.error('Failed to initialize Bybit DB service', {
-    error: error instanceof Error ? error.message : 'Unknown error',
-  });
-});
-
-// Initialize Trading DB service
-tradingDbService.initialize(CONTAINER_NAMES.Users).catch((error: unknown) => {
-  logger.error('Failed to initialize Trading DB service', {
-    error: error instanceof Error ? error.message : 'Unknown error',
-  });
-});
-
 // Start the server
 const PORT = env.PORT;
 const server = app.listen(PORT, '0.0.0.0', () => {
@@ -74,15 +59,40 @@ const server = app.listen(PORT, '0.0.0.0', () => {
   logger.info(`Swagger documentation available at http://localhost:${PORT}/api-docs`);
 });
 
-// Initialize MongoDB service
-mongoDbService
-  .initialize()
-  .then(() => startBinanceWssServer(env.WEB_SOCKET_PORT))
-  .catch((error: unknown) => {
-    logger.error('Failed to initialize MongoDB service', {
+// Initialize all services in proper order
+async function initializeServices(): Promise<void> {
+  try {
+    await Promise.all([
+      // Cosmos DB
+      binanceDbService.initialize(CONTAINER_NAMES.Orders),
+      bybitDbService.initialize(CONTAINER_NAMES.Orders),
+      tradingDbService.initialize(CONTAINER_NAMES.Users),
+
+      // MongoDB
+      mongoDbService.initialize(),
+    ]);
+    logger.info('Cosmos DB and MongoDB services initialized successfully');
+
+    startBinanceWssServer(env.WEB_SOCKET_PORT);
+
+    const tradingService = new TradingService(tradingDbService);
+    const user = await tradingService.getUser();
+
+    // Start Bybit sync service
+    const bybitSymbols = user.bybit?.map((pair) => pair.symbol) || [];
+    bybitOrderSyncService = new OrderSyncService(ExchangeType.BYBIT, bybitSymbols);
+    bybitOrderSyncService.startSync();
+
+    logger.info('All services initialized and started successfully');
+  } catch (error: unknown) {
+    logger.error('Failed to initialize services', {
       error: error instanceof Error ? error.message : 'Unknown error',
     });
-  });
+  }
+}
+
+// Start initialization
+void initializeServices();
 
 // Graceful shutdown
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -92,6 +102,12 @@ process.on('SIGTERM', async () => {
   server.close(() => logger.info('HTTP server closed.'));
 
   try {
+    // Stop sync service
+    if (bybitOrderSyncService) {
+      bybitOrderSyncService.stopSync();
+      logger.info('Bybit order sync service stopped.');
+    }
+
     await mongoDbService.close();
     logger.info('Database connections closed.');
     process.exit(0);

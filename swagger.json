@@ -431,6 +431,99 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"ApiResponse_string_": {
+				"description": "Base response interface for all API responses",
+				"properties": {
+					"success": {
+						"type": "boolean",
+						"description": "Indicates if the operation was successful"
+					},
+					"error": {
+						"type": "string",
+						"description": "Optional error message in case of failure"
+					},
+					"data": {
+						"type": "string",
+						"description": "Optional data payload in case of success"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"PlaceLimitOrderRequest": {
+				"description": "Request body for placing limit orders",
+				"properties": {
+					"side": {
+						"type": "string",
+						"enum": [
+							"buy",
+							"sell"
+						],
+						"description": "The side of the order (buy or sell)",
+						"example": "buy"
+					},
+					"price": {
+						"type": "number",
+						"format": "double",
+						"description": "The price for the order",
+						"example": 100000.01
+					},
+					"quantity": {
+						"type": "number",
+						"format": "double",
+						"description": "The amount/quantity to trade",
+						"example": 0.01
+					},
+					"symbol": {
+						"type": "string",
+						"description": "The trading pair symbol",
+						"example": "BTCUSDT"
+					}
+				},
+				"required": [
+					"side",
+					"price",
+					"quantity",
+					"symbol"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"PlaceMarketOrderRequest": {
+				"description": "Request body for placing market orders",
+				"properties": {
+					"side": {
+						"type": "string",
+						"enum": [
+							"buy",
+							"sell"
+						],
+						"description": "The side of the order (buy or sell)",
+						"example": "buy"
+					},
+					"total": {
+						"type": "number",
+						"format": "double",
+						"description": "The total value of the order (quote quantity)",
+						"example": 100
+					},
+					"symbol": {
+						"type": "string",
+						"description": "The trading pair symbol",
+						"example": "BTCUSDT"
+					}
+				},
+				"required": [
+					"side",
+					"total",
+					"symbol"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"TradeHistoryRequestDto": {
 				"description": "Request parameters for getting user trades",
 				"properties": {
@@ -1637,6 +1730,96 @@
 				]
 			}
 		},
+		"/order/{exchange}/limit": {
+			"post": {
+				"operationId": "PlaceLimitOrder",
+				"responses": {
+					"200": {
+						"description": "The order ID",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Place a limit order on the specified exchange",
+				"tags": [
+					"Order"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The exchange to place the order on",
+						"in": "path",
+						"name": "exchange",
+						"required": true,
+						"schema": {
+							"$ref": "#/components/schemas/ExchangeType"
+						}
+					}
+				],
+				"requestBody": {
+					"description": "The order request payload",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/PlaceLimitOrderRequest",
+								"description": "The order request payload"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/order/{exchange}/market": {
+			"post": {
+				"operationId": "PlaceMarketOrder",
+				"responses": {
+					"200": {
+						"description": "The order ID",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Place a market order on the specified exchange",
+				"tags": [
+					"Order"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The exchange to place the order on",
+						"in": "path",
+						"name": "exchange",
+						"required": true,
+						"schema": {
+							"$ref": "#/components/schemas/ExchangeType"
+						}
+					}
+				],
+				"requestBody": {
+					"description": "The order request payload",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/PlaceMarketOrderRequest",
+								"description": "The order request payload"
+							}
+						}
+					}
+				}
+			}
+		},
 		"/history/user-trades": {
 			"post": {
 				"operationId": "GetUserTrades",
@@ -2284,6 +2467,64 @@
 					}
 				},
 				"description": "Add a Binance order to the bot's orders",
+				"tags": [
+					"Binance Bot"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The ID of the bot",
+						"in": "path",
+						"name": "botId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"description": "The order request containing orderId and symbol",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"symbol": {
+										"type": "string"
+									},
+									"orderId": {
+										"type": "number",
+										"format": "double"
+									}
+								},
+								"required": [
+									"symbol",
+									"orderId"
+								],
+								"type": "object",
+								"description": "The order request containing orderId and symbol"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/binance-bot/{botId}/pending-order": {
+			"post": {
+				"operationId": "InsertFilledOrderQueue",
+				"responses": {
+					"200": {
+						"description": "Filled order added to queue",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_null_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Insert a filled order into the processing queue",
 				"tags": [
 					"Binance Bot"
 				],

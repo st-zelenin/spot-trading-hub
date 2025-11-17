@@ -456,6 +456,72 @@ export class BinanceService implements ExchangeService {
     }
   }
 
+  public async placeLimitOrder(side: 'buy' | 'sell', symbol: string, amount: number, price: number): Promise<string> {
+    logger.info(`Placing limit order: side=${side}, symbol=${symbol}, amount=${amount}, price=${price}`);
+
+    if (amount <= 0) {
+      throw new ValidationError('Amount must be greater than 0');
+    }
+
+    if (price <= 0) {
+      throw new ValidationError('Price must be greater than 0');
+    }
+
+    try {
+      const symbolInfo = await this.getExchangeInfo(symbol);
+
+      const orderOptions: SpotRestAPI.NewOrderRequest = {
+        symbol,
+        side: side === 'buy' ? SpotRestAPI.NewOrderSideEnum.BUY : SpotRestAPI.NewOrderSideEnum.SELL,
+        type: SpotRestAPI.NewOrderTypeEnum.LIMIT,
+        quantity: this.formatQuantity(amount, symbolInfo.stepSize),
+        price: this.formatPriceWithPrecision(price, symbolInfo.tickSize),
+        timeInForce: SpotRestAPI.NewOrderTimeInForceEnum.GTC,
+      };
+
+      const response = await this.executeWithRateLimit(() => this.client.restAPI.newOrder(orderOptions));
+      const order = await response.data();
+
+      if (!order.orderId) {
+        throw new Error('Order ID is undefined');
+      }
+
+      logger.info(`Placed limit order: id=${order.orderId}, status=${order.status}`);
+      return order.orderId.toString();
+    } catch (error) {
+      throw this.getExchangeError('Failed to place limit order', error);
+    }
+  }
+
+  public async placeMarketOrder(side: 'buy' | 'sell', symbol: string, quoteOrderQty: number): Promise<string> {
+    logger.info(`Placing market order: side=${side}, symbol=${symbol}, amount=${quoteOrderQty}`);
+
+    if (quoteOrderQty <= 0) {
+      throw new ValidationError('Amount must be greater than 0');
+    }
+
+    try {
+      const orderOptions: SpotRestAPI.NewOrderRequest = {
+        symbol,
+        side: side === 'buy' ? SpotRestAPI.NewOrderSideEnum.BUY : SpotRestAPI.NewOrderSideEnum.SELL,
+        type: SpotRestAPI.NewOrderTypeEnum.MARKET,
+        quoteOrderQty,
+      };
+
+      const response = await this.executeWithRateLimit(() => this.client.restAPI.newOrder(orderOptions));
+      const order = await response.data();
+
+      if (!order.orderId) {
+        throw new Error('Order ID is undefined');
+      }
+
+      logger.info(`Placed market order: id=${order.orderId}, status=${order.status}`);
+      return order.orderId.toString();
+    } catch (error) {
+      throw this.getExchangeError('Failed to place market order', error);
+    }
+  }
+
   /**
    * Wraps API calls with the rate limiter and retry mechanism
    * @param fn The function to execute with rate limiting

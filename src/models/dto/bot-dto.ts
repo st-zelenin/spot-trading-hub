@@ -152,7 +152,10 @@ export interface FilledOrderQueueItem {
   detailsFetched: boolean;
   createdAt: Date;
   processedAt?: Date;
+  type?: 'filled' | 'pending';
 }
+
+export type NewFilledOrderQueueItem = Omit<FilledOrderQueueItem, 'createdAt' | 'detailsFetched'>;
 
 export interface PagedData<T> {
   items: T[];

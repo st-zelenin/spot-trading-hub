@@ -6,7 +6,7 @@ import { BinanceService } from './services/binance/binance.service';
 import { logger } from './utils/logger';
 import { mongoDbService } from './services/base-mongodb.service';
 import { BotDbService } from './services/bot/bot-db.service';
-import { BotConfig } from './models/dto/bot-dto';
+import { BotConfig, NewFilledOrderQueueItem } from './models/dto/bot-dto';
 
 const clients = new Map<string, { symbol: string; ws: WebSocket }>();
 let uiClient: WebSocket | null = null;
@@ -36,6 +36,7 @@ export const startBinanceWssServer = (port: number): void => {
     'XRPUSDC',
     'SOLUSDC',
     'SUIUSDC',
+    'ARBUSDC',
   ];
   const botDbService = new BotDbService(mongoDbService);
 
@@ -87,6 +88,9 @@ export const startBinanceWssServer = (port: number): void => {
 
   // Start the filled orders processor
   startFilledOrdersProcessor(botDbService, binance, limiter, clients);
+
+  // Start the pending orders processor
+  startPendingOrdersProcessor(botDbService, binance);
 
   wss.on('connection', (ws) => {
     let botId = '';
@@ -193,6 +197,57 @@ export const startFilledOrdersProcessor = (
   }, 5_000);
 };
 
+/**
+ * Start the interval-based processor for pending orders queue
+ */
+export const startPendingOrdersProcessor = (botDbService: BotDbService, binanceService: BinanceService): void => {
+  setInterval(
+    () => {
+      void (async () => {
+        try {
+          const pendingItems = await botDbService.getPendingOrders(50);
+          if (!pendingItems.length) {
+            return;
+          }
+
+          logger.info(`Checking status of ${pendingItems.length} pending orders`);
+
+          for (const item of pendingItems) {
+            try {
+              const order = await binanceService.getOrder(item.orderId.toString(), item.symbol);
+              logger.info('Checked pending order status', {
+                orderId: item.orderId,
+                symbol: item.symbol,
+                status: order.status,
+              });
+
+              // If order is filled, process it and mark as processed
+              if (order.status === 'FILLED') {
+                await botDbService.insertBotOrder(order, item.botId);
+                await botDbService.markFilledOrderAsProcessed(item.botId, item.orderId);
+                logger.info('Pending order was filled and processed', {
+                  botId: item.botId,
+                  orderId: item.orderId,
+                });
+              }
+            } catch (err: unknown) {
+              logger.error('Failed to check pending order status', {
+                botId: item.botId,
+                orderId: item.orderId,
+                symbol: item.symbol,
+                error: err,
+              });
+            }
+          }
+        } catch (err: unknown) {
+          logger.error('Error in pending orders processor', { err });
+        }
+      })();
+    },
+    2 * 60 * 60 * 1000
+  ); // 2 hours
+};
+
 async function handleFilledOrderDetails(
   botId: string,
   symbol: string,
@@ -200,10 +255,11 @@ async function handleFilledOrderDetails(
   botDbService: BotDbService
 ): Promise<void> {
   try {
-    const queueItems = ids.map((orderId) => ({
+    const queueItems = ids.map<NewFilledOrderQueueItem>((orderId) => ({
       botId,
       orderId,
       symbol,
+      type: 'filled',
     }));
 
     await botDbService.insertFilledOrdersQueue(queueItems);

@@ -95,8 +95,14 @@ export class BaseCosmosDbService implements CosmosDbService {
       return this.containers.get(containerId)!;
     }
 
+    if (!this.database) {
+      throw new Error(
+        `Database not initialized. Call initialize() method first before accessing container '${containerId}'`
+      );
+    }
+
     try {
-      const { container } = await this.database!.containers.createIfNotExists({
+      const { container } = await this.database.containers.createIfNotExists({
         id: containerId,
       });
 
