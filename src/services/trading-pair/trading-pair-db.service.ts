@@ -81,7 +81,13 @@ export class TradingPairDbService {
     try {
       const collection = await this.mongoDbService.getCollection<TradingPairDb>(this.getCollectionName('pairs'));
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { id: _, ...updated } = data;
+      const { id: _, ...rest } = data;
+
+      // Filter out undefined values - MongoDB doesn't allow setting fields to undefined
+      const updated = Object.fromEntries(Object.entries(rest).filter(([_, value]) => value !== undefined)) as Omit<
+        TradingPair,
+        'id'
+      >;
 
       const result = await collection.findOneAndUpdate(
         { _id: new ObjectId(id) },
