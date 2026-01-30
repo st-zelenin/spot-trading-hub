@@ -1,0 +1,76 @@
+---
+description: TypeScript coding standards and type safety requirements
+globs: "**/*.ts"
+alwaysApply: false
+---
+
+# TypeScript Standards
+
+## Type Annotations
+
+Always use explicit type annotations for function parameters and return types. Never rely on type inference for function returns.
+
+```typescript
+// ❌ BAD
+public async getOrder(orderId: string, symbol: string) {
+  return await this.service.fetch(orderId, symbol);
+}
+
+// ✅ GOOD
+public async getOrder(orderId: string, symbol: string): Promise<unknown> {
+  return await this.service.fetch(orderId, symbol);
+}
+```
+
+## Never Use `any`
+
+Never use `any`. Use `unknown` when type is truly unknown, then narrow it with type guards.
+
+```typescript
+// ❌ BAD
+catch (error: any) {
+  logger.error(error.message);
+}
+
+// ✅ GOOD
+catch (error: unknown) {
+  const message = error instanceof Error ? error.message : 'Unknown error';
+  logger.error(message);
+}
+```
+
+## Access Modifiers
+
+Always use explicit access modifiers (`public`, `private`, `protected`) on all class members.
+
+```typescript
+// ❌ BAD
+class Service {
+  client: CosmosClient;
+  async initialize() {}
+}
+
+// ✅ GOOD
+class Service {
+  private client: CosmosClient;
+  public async initialize(): Promise<void> {}
+}
+```
+
+## Interfaces Over Type Aliases
+
+Prefer interfaces over type aliases for object shapes. Use `readonly` for immutable properties.
+
+```typescript
+// ❌ BAD
+type Request = {
+  exchange: ExchangeType;
+  orderId: string;
+};
+
+// ✅ GOOD
+export interface Request {
+  readonly exchange: ExchangeType;
+  readonly orderId: string;
+}
+```

@@ -1,0 +1,50 @@
+---
+description: Service layer architecture patterns and factory usage
+globs: "src/services/**/*.ts"
+alwaysApply: false
+---
+
+# Service Layer Patterns
+
+## Factory Pattern
+
+Use factory classes to create service instances. See `ExchangeFactory`, `TradeHistoryFactory`, `HistorySyncFactory`.
+
+```typescript
+// ✅ GOOD
+const exchangeService = ExchangeFactory.getExchangeService(exchange);
+const tradeHistoryService = TradeHistoryFactory.getTradeHistoryService(exchange);
+```
+
+## Interface Segregation
+
+Each service must implement a specific interface. Services receive dependencies via constructor injection.
+
+```typescript
+// ✅ GOOD
+export class BinanceService implements ExchangeService {
+  constructor(private readonly ordersDbService: CosmosDbService) {}
+}
+```
+
+## Base Service Extension
+
+Extend base services (`BaseCosmosDbService`, `BaseMongoDbService`) for database operations. Never duplicate base functionality.
+
+```typescript
+// ✅ GOOD
+export class BinanceDbService extends BaseCosmosDbService {
+  constructor() {
+    super(DB_NAME, PARTITION_KEY);
+  }
+}
+```
+
+## Service Initialization
+
+Services must implement `initialize()` method. Initialize in `src/index.ts` before starting server. Handle errors gracefully.
+
+```typescript
+// ✅ GOOD
+await binanceDbService.initialize(CONTAINER_NAMES.Orders);
+```

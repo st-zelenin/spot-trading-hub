@@ -54,18 +54,23 @@ export class BotDbService {
   public async getAllOrdersPaginated(
     pageNum: number,
     pageSize: number,
-    side: 'BUY' | 'SELL'
+    side: 'BUY' | 'SELL',
+    botId?: string
   ): Promise<PagedData<BinanceBotOrder>> {
     try {
       const collection = await this.mongoDbService.getCollection<BinanceBotOrder>(this.getCollectionName('orders'));
 
-      const filter = { side };
+      const filter: { side: 'BUY' | 'SELL'; botId?: string } = { side };
+      if (botId) {
+        filter.botId = botId;
+      }
       const skip = (pageNum - 1) * pageSize;
 
       const total = await collection.countDocuments(filter);
       const items = await collection.find(filter).sort({ updateTime: -1 }).skip(skip).limit(pageSize).toArray();
 
-      logger.info(`Retrieved ${items.length} orders (page ${pageNum}, size ${pageSize}, side ${side})`);
+      const logContext = { pageNum, pageSize, side, ...(botId && { botId }) };
+      logger.info(`Retrieved ${items.length} orders`, logContext);
 
       return { items, total, pageNum, pageSize };
     } catch (error: unknown) {

@@ -1,0 +1,72 @@
+---
+description: DTO structure patterns and request/response formats
+globs: "src/models/dto/**/*.ts"
+alwaysApply: false
+---
+
+# DTO Patterns
+
+## Readonly Properties
+
+All request DTOs must use `readonly` properties to prevent mutation.
+
+```typescript
+// ✅ GOOD
+export interface CancelOrderRequest {
+  readonly exchange: ExchangeType;
+  readonly orderId: string;
+  readonly symbol: string;
+}
+```
+
+## JSDoc with Examples
+
+All DTOs must include JSDoc comments with `@example` tags showing usage.
+
+```typescript
+// ✅ GOOD
+export interface PlaceLimitOrderRequest {
+  /**
+   * The side of the order (buy or sell)
+   * @example "buy"
+   */
+  readonly side: 'buy' | 'sell';
+
+  /**
+   * The trading pair symbol
+   * @example "BTCUSDT"
+   */
+  readonly symbol: string;
+}
+```
+
+## Group Related DTOs
+
+Group related DTOs in the same file (e.g., `order-dto.ts` contains all order-related DTOs).
+
+```typescript
+// ✅ GOOD - order-dto.ts
+export interface CancelOrderRequest {}
+export interface CancelAllOrdersRequest {}
+export interface PlaceLimitOrderRequest {}
+export interface PlaceMarketOrderRequest {}
+```
+
+## Response Format
+
+Always use `ApiResponse<T>` interface for API responses. Response DTOs extend this pattern.
+
+```typescript
+// ✅ GOOD
+export interface ApiResponse<T = unknown> {
+  readonly success: boolean;
+  readonly error?: string;
+  readonly data?: T;
+}
+
+// Controller returns
+return {
+  success: true,
+  data: result,
+};
+```

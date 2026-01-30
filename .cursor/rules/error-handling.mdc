@@ -1,0 +1,66 @@
+---
+description: Error handling patterns and logging standards
+alwaysApply: true
+---
+
+# Error Handling
+
+## Custom Error Classes
+
+Use custom error classes from `src/models/errors.ts`: `BaseApiError`, `ValidationError`, `NotFoundError`, `ExchangeError`, `CosmosError`, `MongoDbError`.
+
+```typescript
+// ✅ GOOD
+throw new ValidationError(`Unsupported exchange type: ${String(exchangeType)}`);
+throw new NotFoundError(`Order ${orderId} not found`);
+```
+
+## Error Type Checking
+
+Always check error types before accessing properties. Use pattern: `error instanceof Error ? error.message : 'Unknown error'`.
+
+```typescript
+// ❌ BAD
+catch (error) {
+  logger.error(error.message);
+}
+
+// ✅ GOOD
+catch (error: unknown) {
+  const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+  logger.error('Operation failed', { error: errorMessage });
+  throw error;
+}
+```
+
+## Logging with Context
+
+Always log errors with context using `logger.error()`. Include relevant identifiers (exchange, symbol, orderId, etc.).
+
+```typescript
+// ✅ GOOD
+logger.error('Failed to save Binance orders', {
+  error: errorMessage,
+  symbol,
+  orderCount: orders.length,
+});
+```
+
+## Never Swallow Errors
+
+Never catch errors silently. Always log and either rethrow or handle appropriately. The `errorHandlingMiddleware` handles unhandled errors.
+
+```typescript
+// ❌ BAD
+try {
+  await operation();
+} catch {}
+
+// ✅ GOOD
+try {
+  await operation();
+} catch (error: unknown) {
+  logger.error('Operation failed', { error });
+  throw error;
+}
+```

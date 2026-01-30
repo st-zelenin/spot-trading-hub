@@ -1,0 +1,70 @@
+---
+description: TSOA controller patterns and API response format
+globs: "src/controllers/**/*.ts"
+alwaysApply: false
+---
+
+# Controller Patterns
+
+## TSOA Decorators
+
+Always use TSOA decorators: `@Route`, `@Get`, `@Post`, `@Tags`, `@SuccessResponse`. Controllers extend `Controller` from `tsoa`.
+
+```typescript
+// ✅ GOOD
+@Route('order')
+@Tags('Order')
+export class OrderController extends Controller {
+  @Get('')
+  @SuccessResponse('200', 'Exchange raw order')
+  public async getOrder(): Promise<ApiResponse<unknown>> {}
+}
+```
+
+## Response Format
+
+Always return `ApiResponse<T>` format: `{ success: boolean, data: T }`. Never return raw data.
+
+```typescript
+// ❌ BAD
+return await exchangeService.getOrder(orderId, symbol);
+
+// ✅ GOOD
+const order = await exchangeService.getOrder(orderId, symbol);
+return {
+  success: true,
+  data: order,
+};
+```
+
+## JSDoc Requirements
+
+All public controller methods must have JSDoc with `@param` and `@returns` tags.
+
+```typescript
+// ✅ GOOD
+/**
+ * Cancels an order on the specified exchange
+ * @param requestBody The order cancellation request
+ * @returns API response indicating success or failure
+ */
+public async cancelOrder(@Body() requestBody: CancelOrderRequest): Promise<ApiResponse<null>> {}
+```
+
+## Business Logic Delegation
+
+Controllers delegate to services. Never implement business logic in controllers.
+
+```typescript
+// ❌ BAD
+public async cancelOrder() {
+  const client = new BinanceClient();
+  await client.cancelOrder(...);
+}
+
+// ✅ GOOD
+public async cancelOrder(@Body() requestBody: CancelOrderRequest) {
+  const exchangeService = ExchangeFactory.getExchangeService(requestBody.exchange);
+  await exchangeService.cancelOrder(requestBody.orderId, requestBody.symbol);
+}
+```

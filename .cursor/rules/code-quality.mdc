@@ -1,0 +1,62 @@
+---
+description: Code quality standards and naming conventions
+alwaysApply: true
+---
+
+# Code Quality Standards
+
+## Naming Conventions
+
+- **Interfaces/Classes**: PascalCase (`ExchangeService`, `OrderController`)
+- **Files**: kebab-case (`exchange-service.ts`, `order-dto.ts`)
+- **Variables/Functions**: camelCase (`getOrderHistory`, `exchangeService`)
+- **Constants**: UPPER_SNAKE_CASE (`CONTAINER_NAMES`)
+- **No `I` prefix**: Use `ExchangeService`, not `IExchangeService`
+
+## JSDoc Documentation
+
+Add JSDoc comments for all public methods, interfaces, and classes. Include `@param` and `@returns` tags. Add `@example` tags for DTOs.
+
+```typescript
+// ✅ GOOD
+/**
+ * Gets order details from the exchange
+ * @param orderId The ID of the order to retrieve
+ * @param symbol The trading pair symbol
+ * @returns A promise that resolves to the order details
+ */
+public async getOrder(orderId: string, symbol: string): Promise<unknown> {}
+```
+
+## Minimal Comments
+
+Code should be self-explanatory. Only add comments for complex logic, non-obvious decisions, or important warnings.
+
+```typescript
+// ❌ BAD
+// Initialize the service
+await service.initialize();
+
+// ✅ GOOD
+// Initialize services in parallel for faster startup
+await Promise.all([service1.initialize(), service2.initialize()]);
+```
+
+## Environment Configuration
+
+Never hardcode configuration values. Always use `src/config/env.ts` for environment variables.
+
+```typescript
+// ❌ BAD
+const port = 3000;
+const apiKey = 'hardcoded-key';
+
+// ✅ GOOD
+import { env } from './config/env';
+const port = env.PORT;
+const apiKey = env.BINANCE_API_KEY;
+```
+
+## TSOA Generation
+
+After modifying controllers, run `npm run tsoa:generate` to regenerate routes and Swagger documentation.

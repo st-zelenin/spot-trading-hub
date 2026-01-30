@@ -40,15 +40,17 @@ export class BinanceBotController extends Controller {
    * @param pageNum Page number (1-based)
    * @param pageSize Number of items per page
    * @param side Order side filter (BUY or SELL)
+   * @param botId Optional bot ID to filter orders by specific bot
    */
   @Get('orders')
   @SuccessResponse('200', 'Paginated orders')
   public async getAllOrders(
     @Query() pageNum: number,
     @Query() pageSize: number,
-    @Query() side: 'BUY' | 'SELL'
+    @Query() side: 'BUY' | 'SELL',
+    @Query() botId?: string
   ): Promise<ApiResponse<PagedData<BinanceBotOrder>>> {
-    const orders = await this.botDbService.getAllOrdersPaginated(pageNum, pageSize, side);
+    const orders = await this.botDbService.getAllOrdersPaginated(pageNum, pageSize, side, botId);
     return {
       success: true,
       data: orders,
