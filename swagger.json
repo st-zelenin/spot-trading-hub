@@ -155,6 +155,11 @@
 						"type": "number",
 						"format": "double"
 					},
+					"sellQuoteAmount": {
+						"type": "number",
+						"format": "double",
+						"description": "Quote amount to sell (e.g. USDT), rounded to quote precision"
+					},
 					"id": {
 						"type": "string"
 					}
@@ -222,6 +227,11 @@
 					"trailingDelta": {
 						"type": "number",
 						"format": "double"
+					},
+					"sellQuoteAmount": {
+						"type": "number",
+						"format": "double",
+						"description": "Quote amount to sell (e.g. USDT), rounded to quote precision"
 					}
 				},
 				"required": [
@@ -808,6 +818,11 @@
 					"minNotional": {
 						"type": "number",
 						"format": "double"
+					},
+					"quotePrecision": {
+						"type": "number",
+						"format": "double",
+						"description": "Number of decimal places for quote asset (e.g. USDT). Used for rounding quote amounts."
 					}
 				},
 				"required": [
@@ -1056,6 +1071,31 @@
 				],
 				"type": "object",
 				"additionalProperties": false
+			},
+			"UpdateBottomWeightedSellQuoteRequest": {
+				"description": "Request body for updating bottom-weighted bot pairs with sell quote amounts",
+				"properties": {
+					"sellFractionTop": {
+						"type": "number",
+						"format": "double",
+						"description": "Fraction of position to sell at the top (highest price) level, e.g. 0.9"
+					},
+					"sellFractionBottom": {
+						"type": "number",
+						"format": "double",
+						"description": "Fraction of position to sell at the bottom (lowest price) level, e.g. 0.1"
+					}
+				},
+				"required": [
+					"sellFractionTop",
+					"sellFractionBottom"
+				],
+				"type": "object",
+				"additionalProperties": false,
+				"example": {
+					"sellFractionTop": 0.9,
+					"sellFractionBottom": 0.1
+				}
 			},
 			"ApiResponse_Bot-Array_": {
 				"description": "Base response interface for all API responses",
@@ -2157,6 +2197,15 @@
 								"SELL"
 							]
 						}
+					},
+					{
+						"description": "Optional bot ID to filter orders by specific bot",
+						"in": "query",
+						"name": "botId",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
 					}
 				]
 			}
@@ -2333,6 +2382,51 @@
 									"numPairs"
 								],
 								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/binance-bot/{botId}/bottom-weighted-pairs/update-sell-quote": {
+			"put": {
+				"operationId": "UpdateBottomWeightedPairsSellQuote",
+				"responses": {
+					"200": {
+						"description": "Bottom-weighted pairs and config updated",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_Bot_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Update bottom-weighted bot pairs with sellQuoteAmount and store sell fractions in config.\nLoads pairs from the pairs collection, computes sellQuoteAmount per level, persists pairs and config.",
+				"tags": [
+					"Binance Bot"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The ID of the bot",
+						"in": "path",
+						"name": "botId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"description": "Request body with sellFractionTop and sellFractionBottom",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateBottomWeightedSellQuoteRequest",
+								"description": "Request body with sellFractionTop and sellFractionBottom"
 							}
 						}
 					}

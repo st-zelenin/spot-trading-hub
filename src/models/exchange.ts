@@ -13,4 +13,6 @@ export interface SymbolInfo {
   stepSize: string;
   tickSize: string;
   minNotional: number;
+  /** Number of decimal places for quote asset (e.g. USDT). Used for rounding quote amounts. */
+  quotePrecision?: number;
 }

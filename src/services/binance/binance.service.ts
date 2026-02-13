@@ -272,6 +272,7 @@ export class BinanceService implements ExchangeService {
         stepSize,
         tickSize,
         minNotional,
+        quotePrecision: symbolInfo.quotePrecision,
       };
 
       // Cache the result

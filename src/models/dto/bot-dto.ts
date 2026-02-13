@@ -163,3 +163,18 @@ export interface PagedData<T> {
   pageNum: number;
   pageSize: number;
 }
+
+/**
+ * Request body for updating bottom-weighted bot pairs with sell quote amounts
+ * @example { "sellFractionTop": 0.9, "sellFractionBottom": 0.1 }
+ */
+export interface UpdateBottomWeightedSellQuoteRequest {
+  /**
+   * Fraction of position to sell at the top (highest price) level, e.g. 0.9
+   */
+  readonly sellFractionTop: number;
+  /**
+   * Fraction of position to sell at the bottom (lowest price) level, e.g. 0.1
+   */
+  readonly sellFractionBottom: number;
+}

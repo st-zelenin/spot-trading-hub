@@ -81,6 +81,7 @@ const models: TsoaRoute.Models = {
             "buyOrderId": {"dataType":"double"},
             "sellOrderId": {"dataType":"double"},
             "trailingDelta": {"dataType":"double"},
+            "sellQuoteAmount": {"dataType":"double"},
             "id": {"dataType":"string","required":true},
         },
         "additionalProperties": false,
@@ -106,6 +107,7 @@ const models: TsoaRoute.Models = {
             "buyOrderId": {"dataType":"double"},
             "sellOrderId": {"dataType":"double"},
             "trailingDelta": {"dataType":"double"},
+            "sellQuoteAmount": {"dataType":"double"},
         },
         "additionalProperties": false,
     },
@@ -331,6 +333,7 @@ const models: TsoaRoute.Models = {
             "stepSize": {"dataType":"string","required":true},
             "tickSize": {"dataType":"string","required":true},
             "minNotional": {"dataType":"double","required":true},
+            "quotePrecision": {"dataType":"double"},
         },
         "additionalProperties": false,
     },
@@ -435,6 +438,15 @@ const models: TsoaRoute.Models = {
             "success": {"dataType":"boolean","required":true},
             "error": {"dataType":"string"},
             "data": {"ref":"Bot"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "UpdateBottomWeightedSellQuoteRequest": {
+        "dataType": "refObject",
+        "properties": {
+            "sellFractionTop": {"dataType":"double","required":true},
+            "sellFractionBottom": {"dataType":"double","required":true},
         },
         "additionalProperties": false,
     },
@@ -1208,6 +1220,7 @@ export function RegisterRoutes(app: Router) {
                 pageNum: {"in":"query","name":"pageNum","required":true,"dataType":"double"},
                 pageSize: {"in":"query","name":"pageSize","required":true,"dataType":"double"},
                 side: {"in":"query","name":"side","required":true,"dataType":"union","subSchemas":[{"dataType":"enum","enums":["BUY"]},{"dataType":"enum","enums":["SELL"]}]},
+                botId: {"in":"query","name":"botId","dataType":"string"},
         };
         app.get('/binance-bot/orders',
             ...(fetchMiddlewares<RequestHandler>(BinanceBotController)),
@@ -1348,6 +1361,37 @@ export function RegisterRoutes(app: Router) {
 
               await templateService.apiHandler({
                 methodName: 'updateBotNumPairs',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsBinanceBotController_updateBottomWeightedPairsSellQuote: Record<string, TsoaRoute.ParameterSchema> = {
+                botId: {"in":"path","name":"botId","required":true,"dataType":"string"},
+                body: {"in":"body","name":"body","required":true,"ref":"UpdateBottomWeightedSellQuoteRequest"},
+        };
+        app.put('/binance-bot/:botId/bottom-weighted-pairs/update-sell-quote',
+            ...(fetchMiddlewares<RequestHandler>(BinanceBotController)),
+            ...(fetchMiddlewares<RequestHandler>(BinanceBotController.prototype.updateBottomWeightedPairsSellQuote)),
+
+            async function BinanceBotController_updateBottomWeightedPairsSellQuote(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsBinanceBotController_updateBottomWeightedPairsSellQuote, request, response });
+
+                const controller = new BinanceBotController();
+
+              await templateService.apiHandler({
+                methodName: 'updateBottomWeightedPairsSellQuote',
                 controller,
                 response,
                 next,
