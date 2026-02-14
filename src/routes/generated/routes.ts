@@ -386,6 +386,26 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ConsolidatedOrder": {
+        "dataType": "refObject",
+        "properties": {
+            "botId": {"dataType":"string","required":true},
+            "sellPrice": {"dataType":"double","required":true},
+            "quoteQuantity": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ApiResponse_ConsolidatedOrder-Array_": {
+        "dataType": "refObject",
+        "properties": {
+            "success": {"dataType":"boolean","required":true},
+            "error": {"dataType":"string"},
+            "data": {"dataType":"array","array":{"dataType":"refObject","ref":"ConsolidatedOrder"}},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "PagedData_BinanceBotOrder_": {
         "dataType": "refObject",
         "properties": {
@@ -1213,6 +1233,35 @@ export function RegisterRoutes(app: Router) {
 
               await templateService.apiHandler({
                 methodName: 'getBotOrders',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsBinanceBotController_getConsolidatedOrdersLowestByBot: Record<string, TsoaRoute.ParameterSchema> = {
+        };
+        app.get('/binance-bot/consolidated-orders/lowest-by-bot',
+            ...(fetchMiddlewares<RequestHandler>(BinanceBotController)),
+            ...(fetchMiddlewares<RequestHandler>(BinanceBotController.prototype.getConsolidatedOrdersLowestByBot)),
+
+            async function BinanceBotController_getConsolidatedOrdersLowestByBot(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsBinanceBotController_getConsolidatedOrdersLowestByBot, request, response });
+
+                const controller = new BinanceBotController();
+
+              await templateService.apiHandler({
+                methodName: 'getConsolidatedOrdersLowestByBot',
                 controller,
                 response,
                 next,

@@ -20,6 +20,7 @@ export class BotDbService {
   constructor(private readonly mongoDbService: MongoDbService) {
     // Create the unique compound index on botId/orderId when service is initialized
     void this.ensureFilledOrdersQueueIndex();
+    void this.ensureConsolidatedOrdersIndex();
   }
 
   /**
@@ -54,6 +55,32 @@ export class BotDbService {
       logger.info('Inserted consolidated order', { botId: doc.botId, sellPrice: doc.sellPrice });
     } catch (error: unknown) {
       throw this.mongoDbService.getMongoDbError('Failed to insert consolidated order', error);
+    }
+  }
+
+  /**
+   * Returns the consolidated order with the lowest sellPrice for each botId.
+   * @returns One ConsolidatedOrder per botId (the one with minimum sellPrice for that bot)
+   */
+  public async getConsolidatedOrdersWithLowestSellPricePerBot(): Promise<ConsolidatedOrder[]> {
+    try {
+      const collection = await this.mongoDbService.getCollection<ConsolidatedOrder & { _id?: unknown }>(
+        this.getCollectionName('consolidated_orders')
+      );
+      const pipeline: Document[] = [
+        { $sort: { botId: 1, sellPrice: 1 } },
+        { $group: { _id: '$botId', doc: { $first: '$$ROOT' } } },
+        { $replaceRoot: { newRoot: '$doc' } },
+        { $project: { _id: 0, botId: 1, sellPrice: 1, quoteQuantity: 1 } },
+      ];
+      const results = await collection.aggregate<ConsolidatedOrder>(pipeline).toArray();
+      logger.info('Retrieved consolidated orders with lowest sellPrice per bot', { count: results.length });
+      return results;
+    } catch (error: unknown) {
+      throw this.mongoDbService.getMongoDbError(
+        'Failed to get consolidated orders with lowest sellPrice per bot',
+        error
+      );
     }
   }
 
@@ -189,6 +216,21 @@ export class BotDbService {
       return bots.map((bot) => this.toApiModel(bot));
     } catch (error: unknown) {
       throw this.mongoDbService.getMongoDbError('Failed to get all bots', error);
+    }
+  }
+
+  /**
+   * Ensures that the consolidated_orders collection has an index for lowest-sellPrice-per-bot aggregation.
+   */
+  private async ensureConsolidatedOrdersIndex(): Promise<void> {
+    try {
+      const collection = await this.mongoDbService.getCollection<ConsolidatedOrder>(
+        this.getCollectionName('consolidated_orders')
+      );
+      await collection.createIndex({ botId: 1, sellPrice: 1 });
+      logger.info('Created index for consolidated_orders collection');
+    } catch (error: unknown) {
+      logger.error('Failed to create index for consolidated_orders collection', { error });
     }
   }
 

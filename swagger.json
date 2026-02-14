@@ -959,6 +959,54 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"ConsolidatedOrder": {
+				"description": "Document inserted into consolidated_orders collection (one per consolidate operation)",
+				"properties": {
+					"botId": {
+						"type": "string"
+					},
+					"sellPrice": {
+						"type": "number",
+						"format": "double"
+					},
+					"quoteQuantity": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"botId",
+					"sellPrice",
+					"quoteQuantity"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ApiResponse_ConsolidatedOrder-Array_": {
+				"description": "Base response interface for all API responses",
+				"properties": {
+					"success": {
+						"type": "boolean",
+						"description": "Indicates if the operation was successful"
+					},
+					"error": {
+						"type": "string",
+						"description": "Optional error message in case of failure"
+					},
+					"data": {
+						"items": {
+							"$ref": "#/components/schemas/ConsolidatedOrder"
+						},
+						"type": "array",
+						"description": "Optional data payload in case of success"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"PagedData_BinanceBotOrder_": {
 				"properties": {
 					"items": {
@@ -2160,6 +2208,29 @@
 						}
 					}
 				]
+			}
+		},
+		"/binance-bot/consolidated-orders/lowest-by-bot": {
+			"get": {
+				"operationId": "GetConsolidatedOrdersLowestByBot",
+				"responses": {
+					"200": {
+						"description": "Consolidated order with lowest sellPrice per bot",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_ConsolidatedOrder-Array_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Get the consolidated order with the lowest sellPrice for each botId.",
+				"tags": [
+					"Binance Bot"
+				],
+				"security": [],
+				"parameters": []
 			}
 		},
 		"/binance-bot/orders": {

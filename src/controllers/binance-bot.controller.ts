@@ -11,6 +11,7 @@ import {
   BotConfig,
   BotTradingPair,
   ConsolidatePairsRequest,
+  ConsolidatedOrder,
   NewFilledOrderQueueItem,
   PagedData,
   UpdateBottomWeightedSellQuoteRequest,
@@ -39,6 +40,19 @@ export class BinanceBotController extends Controller {
     return {
       success: true,
       data: orders,
+    };
+  }
+
+  /**
+   * Get the consolidated order with the lowest sellPrice for each botId.
+   */
+  @Get('consolidated-orders/lowest-by-bot')
+  @SuccessResponse('200', 'Consolidated order with lowest sellPrice per bot')
+  public async getConsolidatedOrdersLowestByBot(): Promise<ApiResponse<ConsolidatedOrder[]>> {
+    const data = await this.botDbService.getConsolidatedOrdersWithLowestSellPricePerBot();
+    return {
+      success: true,
+      data,
     };
   }
 
