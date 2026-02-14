@@ -1072,6 +1072,24 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"ConsolidatePairsRequest": {
+				"description": "Request body for consolidating top pairs of a progressive bot",
+				"properties": {
+					"count": {
+						"type": "number",
+						"format": "double",
+						"description": "Number of pairs (with highest sell price) to consolidate into one order"
+					}
+				},
+				"required": [
+					"count"
+				],
+				"type": "object",
+				"additionalProperties": false,
+				"example": {
+					"count": 2
+				}
+			},
 			"UpdateBottomWeightedSellQuoteRequest": {
 				"description": "Request body for updating bottom-weighted bot pairs with sell quote amounts",
 				"properties": {
@@ -2382,6 +2400,51 @@
 									"numPairs"
 								],
 								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/binance-bot/{botId}/consolidate-pairs": {
+			"put": {
+				"operationId": "ConsolidatePairs",
+				"responses": {
+					"200": {
+						"description": "Pairs consolidated",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_Bot_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Consolidate count pairs with highest sell price into one order; reduce numPairs by count; save remaining pairs.",
+				"tags": [
+					"Binance Bot"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The ID of the bot",
+						"in": "path",
+						"name": "botId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"description": "Request body with count (number of pairs to consolidate)",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/ConsolidatePairsRequest",
+								"description": "Request body with count (number of pairs to consolidate)"
 							}
 						}
 					}

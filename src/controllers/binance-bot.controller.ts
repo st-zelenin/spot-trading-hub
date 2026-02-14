@@ -10,6 +10,7 @@ import {
   Bot,
   BotConfig,
   BotTradingPair,
+  ConsolidatePairsRequest,
   NewFilledOrderQueueItem,
   PagedData,
   UpdateBottomWeightedSellQuoteRequest,
@@ -18,12 +19,14 @@ import { OrderStatistics } from '../models/dto/statistics.dto';
 import { sendConfigUpdateToBot } from '../binance-wss-server';
 import { TradingPairDbService } from '../services/trading-pair/trading-pair-db.service';
 import { TradingPair } from '../models/trading-pair';
+import { ProgressiveBotService } from '../services/bot/progressive-bot.service';
 
 @Route('binance-bot')
 @Tags('Binance Bot')
 export class BinanceBotController extends Controller {
   private readonly botDbService = new BotDbService(mongoDbService);
   private readonly tradingPairDbService = new TradingPairDbService(mongoDbService);
+  private readonly progressiveBotService = new ProgressiveBotService(this.botDbService);
 
   /**
    * Get all orders for a specific bot
@@ -123,6 +126,26 @@ export class BinanceBotController extends Controller {
     return {
       success: true,
       data,
+    };
+  }
+
+  /**
+   * Consolidate count pairs with highest sell price into one order; reduce numPairs by count; save remaining pairs.
+   * @param botId The ID of the bot
+   * @param body Request body with count (number of pairs to consolidate)
+   * @returns Updated bot
+   */
+  @Put('{botId}/consolidate-pairs')
+  @SuccessResponse('200', 'Pairs consolidated')
+  public async consolidatePairs(
+    @Path() botId: string,
+    @Body() body: ConsolidatePairsRequest
+  ): Promise<ApiResponse<Bot>> {
+    await this.progressiveBotService.consolidateTopPairs(botId, body.count);
+    const bot = await this.botDbService.getBot(botId);
+    return {
+      success: true,
+      data: bot,
     };
   }
 

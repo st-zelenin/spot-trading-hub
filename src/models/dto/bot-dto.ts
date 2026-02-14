@@ -178,3 +178,51 @@ export interface UpdateBottomWeightedSellQuoteRequest {
    */
   readonly sellFractionBottom: number;
 }
+
+/**
+ * Strict config shape for progressive bot (used only by consolidate-pairs endpoint and ProgressiveBotService).
+ * Do not refactor existing code that uses BotConfig to use this interface.
+ */
+export interface ProgressiveBotConfig {
+  readonly botType: 'progressive';
+  readonly numPairs: number;
+  readonly amountToBuy: number;
+}
+
+/**
+ * Strict pair shape for progressive bot consolidate flow (used only by ProgressiveBotService).
+ * Do not refactor existing code that uses BotTradingPair to use this interface.
+ */
+export interface ProgressiveBotTradingPair {
+  readonly sellPrice: number;
+}
+
+/**
+ * Strict bot shape for progressive bot consolidate flow (used only by ProgressiveBotService).
+ * Do not refactor existing code that uses Bot to use this interface.
+ */
+export interface ProgressiveBot {
+  readonly id: string;
+  readonly config: ProgressiveBotConfig;
+  readonly pairs: ProgressiveBotTradingPair[];
+}
+
+/**
+ * Request body for consolidating top pairs of a progressive bot
+ * @example { "count": 2 }
+ */
+export interface ConsolidatePairsRequest {
+  /**
+   * Number of pairs (with highest sell price) to consolidate into one order
+   */
+  readonly count: number;
+}
+
+/**
+ * Document inserted into consolidated_orders collection (one per consolidate operation)
+ */
+export interface ConsolidatedOrder {
+  readonly botId: string;
+  readonly sellPrice: number;
+  readonly quoteQuantity: number;
+}

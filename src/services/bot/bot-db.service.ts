@@ -6,6 +6,7 @@ import {
   BinanceBotOrder,
   Bot,
   BotConfig,
+  ConsolidatedOrder,
   FilledOrderQueueItem,
   NewFilledOrderQueueItem,
   PagedData,
@@ -37,6 +38,22 @@ export class BotDbService {
       logger.info(`Inserted order ${order.orderId} for bot ${botId}`, { result });
     } catch (error: unknown) {
       throw this.mongoDbService.getMongoDbError('Failed to insert bot order', error);
+    }
+  }
+
+  /**
+   * Inserts a consolidated order document (one per consolidate-pairs operation)
+   * @param doc Consolidated order with botId, sellPrice, quoteQuantity
+   */
+  public async insertConsolidatedOrder(doc: ConsolidatedOrder): Promise<void> {
+    try {
+      const collection = await this.mongoDbService.getCollection<ConsolidatedOrder>(
+        this.getCollectionName('consolidated_orders')
+      );
+      await collection.insertOne({ ...doc });
+      logger.info('Inserted consolidated order', { botId: doc.botId, sellPrice: doc.sellPrice });
+    } catch (error: unknown) {
+      throw this.mongoDbService.getMongoDbError('Failed to insert consolidated order', error);
     }
   }
 
